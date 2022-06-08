@@ -1,0 +1,18 @@
+.duration-input {
+  display: flex;
+  align-items: center;
+  margin: 5px 0 0;
+}
+
+input {
+  margin: 0 !important;
+}
+
+.duration-input input {
+  width: 100px;
+  margin-right: 5px !important;
+}
+
+::ng-deep .duration-input .ya-button {
+  margin: 0 !important;
+}

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config date="1653653917135" transient="false">
+	<site updateable="true" url="platform:/base/" enabled="true" policy="USER-EXCLUDE">
+		<feature id="org.eclipse.rcp" version="4.22.0.v20211124-1800" url="features/org.eclipse.rcp_4.22.0.v20211124-1800/">
+		</feature>
+		<feature id="org.eclipse.emf.ecore" version="2.26.0.v20210924-1718" url="features/org.eclipse.emf.ecore_2.26.0.v20210924-1718/">
+		</feature>
+		<feature id="org.eclipse.e4.rcp" version="4.22.0.v20211123-0851" url="features/org.eclipse.e4.rcp_4.22.0.v20211123-0851/">
+		</feature>
+		<feature id="org.eclipse.emf.common" version="2.24.0.v20210924-1718" url="features/org.eclipse.emf.common_2.24.0.v20210924-1718/">
+		</feature>
+		<feature id="org.eclipse.justj.openjdk.hotspot.jre.full.stripped" version="17.0.3.v20220515-1416" url="features/org.eclipse.justj.openjdk.hotspot.jre.full.stripped_17.0.3.v20220515-1416/">
+		</feature>
+		<feature id="org.yamcs.studio.editor.feature" version="1.6.2" url="features/org.yamcs.studio.editor.feature_1.6.2/">
+		</feature>
+		<feature id="org.yamcs.studio.core.feature" version="1.6.2" url="features/org.yamcs.studio.core.feature_1.6.2/" plugin-identifier="org.yamcs.studio.core">
+		</feature>
+	</site>
+</config>

@@ -1,0 +1,834 @@
+Version 5.7.2 released 3-Jun-2022
+- yamcs-web: fix render issue with enumerated and command aggregate arguments
+
+Version 5.7.1 released 30-May-2022
+- Allow 200 aliaes in the yaml files (used to be 50). The number can be configured via the java property org.yamcs.yaml.maxAliases 
+- yamcs-web: Show detail field on links page
+- yamcs-client: fix generation of command source for command with binary arguments
+- fixed units in the data links synthesized parameters (e.g. /yamcs/<hostname>/tm_realtime/packetRate)
+
+
+Version 5.7.0 relased 27-May-2022
+- implemented backend support for raw TCs (telecommands which are not generated from the mission database) and bypassing the postprocessor.
+- Renamed several java packages to avoid having the same package in different jars (this practice has been discouraged since the introduction of java modules) 
+  The "org.yamcs.xtceproc" and "org.yamcs.xtce" in yamcs-core has bene renamed to "org.yamcs.mdb". May require update of custom plugins if they use classes from those packages.
+- Various tweaks and fixes
+
+
+Version 5.6.2 released 11-Apr-2022
+- Added support for Java 17 by using Nashorn javascript engine as a module
+- Removed support for Java 1.8 - 19
+- Various tweaks and fixes
+
+Version 5.6.1 released 4-Apr-2022
+- Replication: detect and recover dead replication links
+- Replication: allow to synchronize the mission time across replication
+- Buckets: allow configurable limits for total size and number of objects in a bucket
+- Various tweaks and fixes
+
+Version 5.6.0 released 2-Mar-2022
+- Keep a log of admin, link, queue and alarm activity
+- Add support for folder creation within buckets
+- Upgrade of protobuf dependency
+- Allow customizing message decoding of UdpParameterDataLink through extension
+- Add toggle to switch between hex/decimal input for unsigned integer arguments
+- API updates:
+    - Link actions are now separate (one method per action)
+    - Queue actions are now separate (one method per action)
+    - Alarm actions are now separate (one method per action)
+    - Old-style websocket is now fully removed (use new-style)
+    - Tags are gone (use timeline)
+- Various tweaks and fixes
+
+Version 5.5.7 released 3-Feb-2022
+- restored backward compatibility for GenericPacketPreprocessor time decoding (in version 5.5.6 it was using the CUC decoder by default instead of using the FIXED decoder)
+- allow raw frame decoding using Reed-Solomon and de-randomization.
+- allow enabling errorDetection for uplink at virtual channel level.
+- fixed bug in FilePollingTmDataLink which was double counting the packets
+
+Version 5.5.6 released 30-Jan-2022
+- added some functions to algorithms
+- allow disabling randomization for specific virtual channels
+- changed the time decoding handling in TM pre-processors to be more consistent
+- various tweaks and fixes
+
+Version 5.5.5 released 20-Oct-2021
+- yamcs-web: fixed display of command arguments in the command history
+
+Version 5.5.4 released 20-Oct-2021
+- Fixed the CLTU randomization sequence to conform to CCSDS 231.0 issue 4 when LDPC coding is enabled.
+- Accept numeric value of an enumeration command argument
+- Fixed lost frame count calculation
+- Allow DataSource=ground for parameters
+- Fixed CFDP reliable option not showing 
+- Fixed duplicate data in the parameter archive
+- Allow specification of generation time in set parameter value requests
+- minor tweaks and fixes
+
+
+Version 5.5.3 released 30-Jul-2021
+- first version of the Yamcs Timeline
+- minor tweaks and fixes
+
+Version 5.5.2 released 22-Jun-2021
+- Fixed XTCE reference solver of types para->Type->BaseType which were defined in reverse order in different files.
+- Fixed parameter archive retrieval of raw values only.
+- yamcs-web: fixed replication page not showing info.
+
+Version 5.5.1 released 8-Jun-2021
+- Fixed (again) the name of the packets shown on yamcs-web front page (TM statistics)
+- Fixed an XTCE reference solving bug
+- Fixed the retrieval from parameter archive with the option useRawValue=true
+
+Version 5.5.0 released 1-Jun-2021
+- Added algorithm status and tracing (currently only working for global algorithms)
+- Added support for XTCE transmission constraints and verifiers (using MatchCriteria, BooleanExpression...)
+- Added java-expression algorithms
+- Added types to system parameters
+- Fixed the realtime parameter archive - it can now be used as a preferred configuration for all systems receiving only realtime data (e.g. testing in an EGSE/Lab setup)
+- CCSDS Frame Processing: allow plugging user defined virtual channels handlers
+- Fixed the Parameter Archive to reconstruct aggregate and array parameters out of their components (which are stored separately in the archive)
+- minor tweaks and fixes
+
+Version 5.4.5  released 5-Apr-2021
+- Fixed a bug causing the rejection of aggregates with enumeration members when used as command arguments
+
+Version 5.4.4 released 2-Apr-2021
+- Fixed a bug in the TM partitioning flags causing the homepage of Yamcs to not display the packets beyond the top level.
+- Fixed a typo in reading the TCO configuration causing the defaultTof option to be ignored.
+
+Version 5.4.3 released 16-Mar-2021
+- Added some REST calls for getting more detailed information about parameter archive (can be used to investigate problems of missing data). 
+- Added possibility to trace algorithm executions.
+- minor tweaks and fixes
+
+Version 5.4.2 released 9-Mar-2021
+- Fixed the container name used as partition in the tm table. XtceTmRecorder will only use as partition (pname column in the tm table) the containers directly inherited from the root container defined on the stream on which the TM packet is received. Previously, if a container included another container inside, this last one would have been used as partition and also appear as the name of the packet in the home page of yamcs-web.
+- Added a maxValues parameter to the parameter range request
+- Added an API for instance reconfiguration  - the instances created from templates can now be updated following template changes, or with modified template variables.
+- Allow aggregate values (not only members) to be used in Java algorithms (not yet available in Python or Javascript algorithms - these have to make reference to aggregate members)
+- minor tweaks and fixes
+
+Version 5.4.1 released 17-Feb-2021
+- CFDP: allow to configure the inactivityTimeout
+- changed yamcs systemd script to not depend on bash being the system shell
+- add support for web response filtering
+- added a minRange option to the parameter range request allowing to limit the number of ranges returned. This is done by aggregating data into multi value range.
+
+Version 5.4.0 released 10-Feb-2021
+- Generalized file transfers: allow different than CFDP file transfer services to be implemented offering the same external API.
+- Added displayName/email attribute support to YamlAuthModule
+- Added queueing support to CFDP - files can be queued for later upload
+- Allow multi-purpose links (e.g. both TM and TC)
+- Added a perftest example useful to asses the performance of Yamcs
+- Added a bidirectional TCP TM/TC link
+- Save the link name in the tm table - this allows later to find out packets received via a certain link
+- The usage of time of flight estimatro (TOF) in the time correlation service (TOC) has been made optional (a config setting can be used to set the tof to a fixed value)
+- yamcs-web: show an view of the replication status
+- yamcs-web: moved the buckets out of the admin area
+- various other tweaks and fixes
+
+Version 5.3.5 released 20-Dec-2020
+- Fixed a bug related to CFDP transfer storage in archive (the entity id was not saved for the incoming transfers)
+
+Version 5.3.4 released 17-Dec-2020
+- Fixed a bug in replication introduced in version 5.3.2 when allowing tuples to contain null values.
+- Improved XTCE support for command verifiers, demonstrated with the PUS simulator.
+
+Version 5.3.3 released 14-Dec-2020
+- Added a simple PUS simulator to exemplify the usage of the time correlation (TCO) service with a free running on-board clock.
+- Save the OBT (value of the free running on-board clock) in the tm table.
+- TCP and UDP packet links populate the ERT (Earth Reception Time) field of the TM packets with the local mission time as this is required by the TCO service.
+
+Version 5.3.2 released 11-Dec-2020
+- Reorganized the service creation and initialization such that a pre-processor (which used to be initialized earlier) can have access to them.
+- CfsPacketPreprocessor can optionally use the time correlation service to verify the time extracted from the packet.
+- Removed the clock name from the time correlation service, use the serviceName instead.
+
+Version 5.3.1 released 8-Dec-2020
+- CFDP improvements
+- minor tweaks and fixes
+
+Version 5.3.0 released 25-Nov-2020
+- Added a bulk load option to be used by the command yamcs tables load. It does not update the histograms and also disables the RocksDB WAL (write ahead log) resulting in faster loads.
+  the histograms have to be rebuilt manually after this.
+- Introduced a table format V3 which sorts properly the negative numbers and also the strings
+   - most Yamcs tables use a timestamp as primary key and the timestamps before 1970 are represented as negative numbers and thus were not sorted properly
+   - the old format V2 is still supported but new tables created with this Yamcs version will not be readable by a previous Yamcs vsersion.
+- Preview feature: secondary indices on tables; not used for regular Yamcs tables (tm, events, cmd_history, etc) but it will be used for the soon to come Yamcs timeline.
+- Preview feature: time correlation service; can be used to correlate a free running on-board clock with the ground time.
+   - in case the on-board time is correlated using other means (e.g. on-board GPS receiver), the service can still be used for verifying the synchronization.
+- Yamcs-web: show a preview of the evaluation of transmission constraints before sending a command 
+- Yamcs-web: tables/streams are moved to admin section, and a web-based DB-shell is added
+- Yamcs-web: packets can now be individually exported or copied to clipboard
+
+
+Version 5.2.0 released 13-Oct-2020
+- Allow all TM data links to update a simulation time if configured
+- Allow the XTCE loader to load multiple files using a glob pattern or a list
+- Added support for absolute time command arguments
+- Added more options for time decoding of Cfs and Pus packet preprocessors.
+- Added support for command arguments of type aggregate
+- Minor tweaks and fixes
+
+Version 5.1.3 released 9-Sep-2020
+- minor tweaks and fixes
+
+Version 5.1.2 released 28-Aug-2020
+- add support for variables when creating instances from templates
+- Add RemoteUserAuthModule for proxied authentication (API only)
+- Fix retrieval of single packets
+- minor tweaks and fixes
+
+Version 5.1.1 released 2-Aug-2020
+- fixed the GenericCommandPostprocessor to work with errorDetection: NONE (which is also the default if no errorDetection is specified)
+
+Version 5.1.0 released 2-Aug-2020
+- moved the simulator into its own package out of the examples (such that the examples are independent of eachother)
+- changed the errorCorrection into errorDetection for TC frames (for consistency with TM links and also to documentation)
+- added a parameter on CfsCommandPostprocessor to allow swaping between checksum and command code (necessary on little endian systems with older versions of cFS)
+- added the possibility to specify patterns for the TC streams to define which command goes into which stream (before the way to do this was using some sql statements)
+- various bugfixes
+
+Version 5.0.0 released 3-Jul-2020
+- migrated the .def table definitions into the rocksdb. 
+  WARNING: the migration is automatic but once migrated the version 4 will not be able to read the data anymore! 
+  (the data in the database is not changed, if absolutely necessary we can make a version 4.10.x that can read it)
+- split Event and ParameterValue protobuf messages into internal and external. 
+  The internal messages use Yamcs timestamps whereas the external messages use protobuf timestamps.
+- changed the link configuration to be more consistent: removed the "args" parameter; 
+  all the properties should be moved one level up.
+- added a status bitfield on all packets where pre-processors can set specific flags such as:
+  packet invalid
+  local time used instead of spacecraft generation time extracted from packet
+  do not archive
+- implemented a replication service
+- removed default yearly partitions for tm/pp data (can still be done by creating manually the tables)
+- added an option to send raw frame data over streams (such that they can be monitored externally or saved into tables)
+- CfsEventDecoder: added an option to specify byte endianess with default to big endian (used to be hardcoded to little endian)
+                   added also an option for the charset used to decode the text string, default to US-ASCII
+- removed yamcs-artemis (since it was used mainly for replication)
+- removed the IndexServer:
+    The CCSDS completeness index functionality is provided now by the CcsdsTmIndex service. 
+    The histograms do not require definition of any extra service.
+- yamcs-xtce: 
+    all parameter and argument types need to be constructed through builders. 
+    all data encodings need to be constructed through builders. 
+    support the baseType XTCE property which allows a type to inherit properties from another type.
+    AbsoluteTimeParameterType uses java Instant as initial value (rather than Yamcs times)
+- remove the yamcs-simulation rpm. Simulation is one of the examples along others.
+- updated RocksdDB to a newer version such that Yamcs can be run now on Windows 64bits and Linux ARM64 (e.g. Raspberry Pi 4)
+
+
+Version 4.10.9 released 24-Apr-2020
+- reorganized the links by removing the DataLinkInitializer and creating a LinkManager 
+  that has more functionality, like for example being able to negatively acknowledge commands
+  if all the TC links are disabled.
+- add a filter box to Packet Viewer (thanks to QinetiQ Space)
+- minor other tweaks and fixes
+
+Version 4.10.8 released 28-Feb-2020
+- Fixed a shutdown issue with RealtimeArchiveFiller (#377)
+- Link activity is now protected by the ``ReadLinks`` privilege
+- Fixed an issue with completion of TSE commands
+- Minor other tweaks and fixes
+
+Version 4.10.7 released 19-Feb-2020
+- added command stacks on the yamcs-web
+- added command clearance functionality
+- allow to specify command options (such as enabling/disabling
+pre-transmission contrains and post-transmission command verifiers) when sending commands
+
+Version 4.10.6 released 13-Feb-2020
+- allow to save invalid packets into a stream/table for later retrieval
+- several improvements to CFDP
+- allow to configure CLTU start and tail sequence
+- added COP1 status subscription via websocket
+- other small fixes and improvements (see detailed git log for a list)
+
+
+Version 4.10.5 released 25-Nov-2019
+- small random fixes and improvements (see detailed git log for a list)
+
+Version 4.10.4 relesed 5-Nov-2019
+- made the command acknowledgments more uniform 
+- cancel the pending verifiers on command completion
+- improvements into the command queue definition
+- added CCSDS TC Data Link protocol including COP1
+- allow links to set an Earth Reception Time on TM packets (used by the SLE link
+to set the time as received from the ground station) - useful for
+spacecraft/ground time synchronization purposes
+- various changes in the web interface
+- various bugfixes
+
+Version 4.10.3 release 24-Sep-2019
+- changed the alarms to follow more closely the ISA-18.2 standard
+- added a user management module in the web interface
+- improved validation of yaml configuration files
+- many improvements in the web interface
+- various bugfixes
+
+Version 4.10.2 release 17-Jul-2019
+- various bugfixes 
+
+Version 4.10.1 released 8-Jul-2019
+- fixed bug with TSE driver not recovering from connection reset
+- allow specific buckets to map to the file system instead of rocksdb (previously it was all or nothing)
+
+Version 4.10.0 released 14-Jun-2019
+- added a UDP TC data link
+- added pre/post processors for cFS
+- added initial CFDP support
+
+Version 4.9.5 released 9-May-2019
+- fixed bug in 4.9.4 that causes the websocket packet subscriptions to fail (meaning
+that Packet Viewer was not working)
+
+Version 4.9.4 released 7-May-2019
+- fixes replay with multiple XTCE root containers
+- added support for HTTPS
+- added the Enumerated parameter value type (previously, the values for the XTCE Enumerated
+parameter types were represented as parameter values with String engineering
+value and Integer raw value)
+
+Version 4.9.3 released 3-April-2019
+- fixes command queues displays
+
+Version 4.9.2 released 1-April-2019
+- allow to set individual members of aggregates and elements of arrays
+- better support for XTCE initial values
+- various bugfixes
+
+Version 4.9.1 released 24-March-2019
+- allow to get and subscribe individual members of aggregates and elements of
+arrays
+- various bugfixes
+
+Version 4.9.0 released 19-February-2019
+- added support for CCSDS TM frame protocols (TM, AOS and USLP frames)
+- various improvements in yamcs-web
+
+Version 4.8.1 released 28-January-2019
+- allow multiple TSE commands in one telecommand
+- various bugfixes
+
+Version 4.8.0 released 28-January-2019
+- allow to create instances on the fly from templates
+- added a generic packet input stream (for spliting tcp stream into packets)
+- added a generic packet preprocessor at reads timestamps in UNIX millisec format and sequence count from user defined offsets
+
+Version 4.7.3 released 26-November-2018
+- allow to online (i.e. without modifying the MDB) change calibrations and alarms for parameters part of a running processor
+- various bugfixes
+
+Version 4.7.2 released 30-October-2018
+- various bugfixes
+
+Version 4.7.1 released 12-October-2018
+- various bugfixes
+
+Version 4.7 released 28-September-2018
+- implemented interface to Test Support Equipment (power supplies, osciloscopes, ...)
+- several changes in instance state - allow offline instances
+- implemented step by step replay
+- allow same DataLink to be IN and OUT
+
+Version 4.6.3 released 28-August-2018
+- limit the number of parameters that can be stored in one segment of the
+parameter arhchive to avoid OOM errors
+- various small bugfixes
+
+
+Version 4.6.2 released 18-July-2018
+- better cleanup before instance restart
+- store CCSDS TM Index also in the tablespace (rahter than in a separate
+rocksdb database)
+
+
+Version 4.6.1 released 18-July-2018
+- added support for XTCE IndirectParameterRefEntry
+- added EXTERNAL data sources to better support writable parameters not
+managed by yamcs
+
+
+Version 4.6.0 released 11-July-2018
+- introduced aggregate and array data types (not yet fully working with the
+parameter archive)
+- introduced a V7 spreadsheet loader that makes a distinction between
+parameters/arguments and their data types 
+- added support for MIL-STD-1750A floating point encoding (32 and 48 bits)
+- added a ECSS/PUS packet preprocessor 
+- added a CCSDS Unsegmented Time Code decoder
+- config: Deprecate webConfig in favour of args under HttpServer
+- archive: Add File System-based bucket implementation
+- web: Add file browser for quickly accessing displays in standalone mode
+- web: Add full-screen support for both displays and layouts
+- web: Add parameter table viewer
+- web: Fix top instance switcher
+
+
+Version 4.5.0 released 26-Jun-2018
+- added a simple object storage API (buckets)
+- security improvements - it is possible now to stack multiple AuthModules to
+provide authentication/authorization from diferent sources.
+- added a Kerberos/Spnego authModule
+- Introduced YamcsService as a required interface for global and instance services
+- Show contextual calibrators in web interface
+- Added various CLI commands (for buckets, processors, clients)
+- General clean-up of Yaml configuration files to match closer to the upcoming
+Server manual
+- added a last value cache that is present all the time.
+
+Version 4.4.2 released 23-May-2018
+- yamcs-web: support multiple series plots
+- TmLink: added the posibility to specify the checksum type in the Columbus
+pre-processor and added an option to drop corrupted packets.
+
+
+Version 4.4.1 released 14-May-2018
+- added the possibility to exclude parameter groups from replays
+- yamcs-web: added a view for the archive index
+- yamcs-web: support replays
+- fixed the retrieval of static files when zeroCopy was disabled
+- bugfix: in /api/instances do not reload the XtceDb from disk, instead
+provide information about the db already loaded
+- bugfix: when an instance fails to init - force it to the FAILED state
+(rather than NEW), also do not store the instances that failed to init in the instance list 
+
+
+Version 4.4.0 released 7-May-2018
+- added support for context calibrators
+- added support for XTCE MathOperationCalibrator
+- fixed the names in the spreadsheet such that additional columns can be inserted without loosing compatibility. 
+- added support for XTCE MathOperation algorithms
+- various XTCE parser fixes
+
+
+Version 4.3.1 released 25-Apr-2018
+- parameter archive: fixed encoding of boolean segments
+- XTCE parser: fixed parsing container references in command definition
+- yamcs-web: allow to set software parameters and display information about time parameters
+
+Version 4.3.0 released 23-Apr-2018
+- implemented IncludeCondition for container and parameter entries as per XTCE spec
+- server support for access token generation based on password credentials
+- updates to yamcs-web to support authentication and privilege checking (using access tokens)
+- fixed the parameter archive for boolean parameters
+- fixed the processing of XTCE absolute time parameters 
+
+Version 4.2.2 released 17-Apr-2018
+- partially fixed the parameter archive for boolean parameters
+
+Version 4.2.1 released 17-Apr-2018
+- send events when an algorithm execution fails 
+- read commands from XTCE XML files compatible with CCSDS green book
+
+
+Version 4.2.0 released 6-Apr-2018
+- more web improvements - alarm detail, plots improvement, event downloads...
+- added parameter ranges API
+- allow to filter stream data on protobuf message properties
+- better enforcements of privileges on table/stream downloads/uploads and other REST calls
+
+Version 4.1.2 released 14-Mar-2018
+- fixed bug in the parameter archive encoding of large integer numbers
+- fixed the handling of expiration of parameters when the processor is running with a simulated clock
+- Events significance: added the XTCE significance levels for Events produced from the MDB algorithms
+
+
+Version 4.1.1 released 7-Mar-2018
+ - added an alternative Parameter Cache that consumes less memory by using array of primitives to store parameter values
+ - refurbished yamcs-web
+ - support multiple parameter subscriptions via the websocket
+ - serialized XTCEDB use now a filename which is a SHA-1 of the old filename (which is made of the list of individual components of the XtceDB). This avoids problems with too long filenames.
+
+
+Version 4.0.1 released 23-Jan-2018
+ - fixed Artemis data links
+ - the parameter select dialog from the Archive Browser will show now also parameters that are not part of containers
+
+
+Version 4.0.0 released 10-Jan-2018
+- fixed the version 6.0 in refmdb.xls and the changelog (it was mistakenly written as version 5.7 not matching the SpreadsheetLoader)
+- TcpTcDataLink: the configuration can be made in the service declaration in yamcs.<instance>.yaml, not necessary to have the tcp.yaml anymore
+- changed algorithms to work as functions such that they can coexist in the same scriptEngine (to improve performance)
+- allow java-expressions to be used for command argument reverse calibrations (eng->raw value conversion)
+- Spreadsheet Loader: allow to better specify the encoding in the command arguments
+- Introduced tablespaces to
+    - use less rocksdb databases for one yamcs instance
+    - allow to share the same rocksdb databae for multiple instances (useful in case of short lived instances such as simulation/test sessions)
+    - improve starting performance - no more need to scan all the databases at startup
+- renamed yprocessor.yaml to processor.yaml and replaced "tmProvider", "commanReleaser", "parameterProviders" with generic "services"
+- changed WebSocket parameter unsubscribe all to unsubscribe both the "all" subscription as well as the individual subscriptions (if any). Fixes issue #210 in github.
+- Introduced two components part of the TM Packet Data Link:
+  - packet input stream - responsible for chopping up a stream into packets
+  - packet preprocessor - responsible for extracting basic information (time, seq count) from a packet
+
+
+
+Version 3.4.0  released 6-Dec-2017
+- moved artemis into a separate source project which yamcs-core does not depend on. 
+  Allow to connect to an external Artemis server by specifying artemisUrl: "tcp://..." into yamcs.<instance>.yaml or yamcs.yaml
+- added the possibility to restart instances and send information about current connected instance/processor via websocket
+- added command history cascading via Artemis
+- TcpTcDataLink: added an option to limit the rate of commands sent
+
+Version 3.3.0 Released 24-Oct-2017
+- Support index requests with parameters encoded in the HTTP request body in order to allow a large number of packets to be specified (otherwise, the request would exceed maximum URI size).
+- Allow alias parameter name  references in the MDB SpreadSheets (including in the Alarm sheet which didn't allow any reference at all)
+- Fixed the reading of ranges (inclusive vs exlcusive) from XTCE XML files
+- Added two options to parameter subscription: 
+  - send an update when parameters are expiring (by default false)
+  - send the first value from cache if available (by default true)
+- Change the expirationTime (absolute time) to expireMillis (relative time) in the ParameterValue.
+- Implemented parameter expiration in the USS web displays
+- Allow to specify custom decoders to be used in container(packet) processing
+- Added binary data encoding with leading size specified (similar to string)
+- Changed the spreadsheet to make it clerarer the difference between raw value, encoding (how to decode the raw value from the binary) and engineering value (raw value passed through a calibration function)
+- For standalone parameters (i.e. not extracted from XTCE packets) coming without an enginnering value, 
+  calibrate (raw->eng value) them inside the processor rather than before being injected in the stream.
+  This means the parameters are stored in the L0 archive also in the initial form (could be raw+eng,only raw or only eng) and they are calibrated (using the current MDB) for each replay
+  Of course ParameterArchive will store them calibrated.
+- Added a command to check the configuration by loading the services without starting them
+  
+
+Version 3.2.2 Released 17-May-2017
+- Fixed tag handling in Yamcs Monitor/Archive Browser
+
+
+Version 3.2.1 Released 15-May-2017
+- Added an option to yamcs rocksdb compact to specify the target file size and changed the default size from 64MB to 256MB
+- Java expressions can be used for raw->engineering value calibration (in addition to polynomial and spline). This allow to use mathematical expressions such as logarithms and trigonometric functions.
+- fixed seek in replays
+- Fix in Yamcs Monitor: remove closed processors
+- RocksDB: set by default the table block cache to 8MB (previously it was disabled)
+
+Version 3.2.0 Released 18-Apr-2017
+- Improved the yamcs command line with several new sub-commands (xtcedb, parchive)
+- Removed Artemis based replays and management (control processors)
+- Added a new yatch(table/stream) data type PARAMETER_VALUE to replace PROTOBUF(ParameterValue) for more flexibility
+
+Version 3.1.2 Released 17-Mar-2017
+- PacketViewer: fixed a bug causing the packetviewer to not be able to load files unless the -l (to limit the max num packets loaded) option was provided 
+
+Version 3.1.1 Released 14-Mar-2017
+- fixed a bug in RestClient causing Swing client tools (Yamcs Monitor &co) to NPE when doing File -> Connect to Yamcs (connection by specifying the http url in the command line still worked)
+
+
+Version 3.1.0 Released 13-Mar-2017
+- MDB: allow parameters without raw types if they are not part of a container
+- REST Api: add option to get the details of parameters in 'list parameter'
+- Ease extension of the FilePollingTmDatalink and TmFileReader.
+- if processor -> cacheall is disabled, retrieve at least all parameters that have alarms associated
+- allow algorithm manager to be usable in replays
+- Improved XTCE XML parsing support:
+      - read alarms
+      - read string parameters
+      - read multiple space systems    
+- Removed the name from the DataEncoding classes (in XTCE DataEncodings are not named)    
+- allow to remove a parameter from the XtceDB (to be used in a controlled way only)
+- Changed the order of starting the services:
+    1. All global services are created
+    2. All instance services are created
+    3. All global services are started
+    4. All instance services are started
+    
+    Used to be 1,3,(2,4)+ - and this makes for example the HttpServer to be started before the instances are created and some methods (like subscribe event,time,etc) will fail at first because the processor is not available.
+- updated to RocksDB 5.1.2
+
+Version 3.0.0 Released 12-Jan-2017
+- no change from 0.0.30 except this changelog
+
+
+Version 0.0.30 Released 12-Jan-2017
+- do now allow FixedString command arguments defined in the Spreadsheet to have a non multiple of 8 bitSize
+- fixed the encoding of command binary arguments
+- allow to specifiy the bitSize for LeadingString and TerminatedString command arguments and treat it as the minimum size of the encoded value (if the passed argument is shorter, the remaining will not be filled in) 
+- fixed REST parameter download  not finishing properly
+- allow profile based downloads
+- support downloading multiple parameters at the same time
+- fixed reading non-value RocksDB partitions from disk at startup
+- publish jvmTotalMemory, jvmMemoryUsed and jvmThreadCount as system parameter to allow monitoring java memory usage (in KB) and number of active threads
+- fix recording and replay of system parameters; all of them are using /yamcs/<instance-id> as recording group.
+- updated to rocksdb 4.8.0 (to solve some weird bug on 32bits column family options being ignored)
+- updated from HornetQ to ActiveMQ Artemis
+- changed all SWING Yamcs clients to use the REST and WebSocket API instead of HornetQ
+- allow to retrieve via REST internals of open RocksDB databases
+- implement backup support for RocksDB databases
+- RocksDB allow storage of partitions using the partitioning key in front of the key instead of creating different column family.
+- allow TM file injector to inject gzipped files
+- changed the histograms (indexes) to be part of the same rocksdb database as the main data. To convert from the old format to the new, use the yamcs command line.
+- added yamcs command line that allows to perform backups, some low level rocksdb operations and some archive upgrade capability.
+
+
+Version 0.29.4 Released 26-June-2016
+- fix 0.29.3 packaging error related to StringCovertors moved to yamcs-core from yamcs-api
+- fix changing speed in the replays
+- fix hornetq replays which were never releasing the threads
+- added posibility to configure RocksDB options
+- added checks for preventing one rocksdb database being open twice
+- changed tables to use default rocksdb partition if no partitioning is defined (previously an extra null partition was created) 
+  the code is backward compatbile. If old null partitions are present, they will be used instead of the default parttion.
+- parameter archive: 
+  - implemented some sanity checks to avoid,  detect and better report corruption or inconsistencies. 
+  - added a REST call that allows removing entire partitions (in order to recreate them from scratch from the raw data)
+- added possibility to filter command history requests by command names
+- bug fix in PacketViewer: when connecting to Yamcs, first disconnect if already connected, otherwise two connections will be open in parallel showing all packets duplicate
+- bug fix in PacketViwer: when loading file with CCSDS packets, the generation time in the left column is invalid
+- bug fix in PacketViwer: searching (ctrl+F) proceduces a ClassCastException
+
+
+Version 0.29.3 Released 28-Feb-2016
+- added backFiller config in the ParameterArchive
+- added an option in the web displays to use the ParameterArchive for parameter sampling and history
+- added a -noweb parameter to make-rpm.sh script to disable building the web stuff inside the rpm
+- implemented realtimeFiller for the parameter archive
+- un-hardcoded the stream names in the PpRecorder such that system parameters can also be recorded
+- various web improvements
+- replaced internal use of protbuf Value with java org.yamcs.parameter.Value to reduce memory usage
+
+Version 0.29.2 Released 19-Feb-2015
+- implemented ParameterArchive
+- various small bug fixes
+
+Version 0.29.1 Released 05-Feb-2015
+- more improvements to the yamcs-web: alarm history, events
+- converted the CCSDS Index to RocksDB from TokyoCabinet
+- removed TokyoCabinet (still available as a separate module)
+- more REST interface improvements: filtering events, command history, raw packet download
+- removed dependency on HornetQ in the IndexServer
+- added command history replay in replay processors
+- better distinction between replay (=via processor) and retrieval (=directly from archive without any reprocessing)
+
+Version 0.29.0 Released 10-Nov-2015
+- added the posibility to configure TM archiving on fine grained level
+- many changes in the WEB API (consistency, new features)
+- completely changed the yamcs-web to a new framework based on AngularJS and Bootstrap + added several features like MDB parameter browser, access to alarms.
+
+Version 0.28.0 Released 20-Sep-2015
+- switched commanding to XTCE
+- improved the rest interface
+- modularized more the creation of streams and channels
+- added rocksdb storage engine
+- added command pretransmission checks
+- added command verification
+- added parameter plots to (USS) web displays
+
+
+Version 0.27.3 Released 31-Oct-2014
+- fixed connection in PacketViewer:
+  - now the stream specified in the connection dialog is taken into account
+  - if the stream is not specified, then tm_realtime is used
+  - an "-s" option has been added such that the stream can be spefcified on the command line also
+
+Version 0.27.2 Released 21-Oct-2014
+- fixed bug in packetviewer
+
+Version 0.27.1 Released 10-Oct-2014
+- check if web connedction to yamcs is running via https and use wss:// instead of ws:// for websocket
+
+Version 0.27.0 Relased 23-Sep-2014
+- improvements into the GUIs
+- read the parameter type units (e.g. meter) from XTCE XML file
+
+
+Version 0.26.4 Released 27-Aug-2014 
+- Renamed system variables to system parameters for consistency
+- Added a system parameter for yamcs instance
+
+
+Version 0.26.3 Released 22-Aug-2014
+- Fixed the parameters passing through hornetq
+
+Version 0.26.2 Released 14-Aug-2014
+- Fix data count on HornetQPpProvider
+- Fix OnValueChange update of enum params
+- Fix bug where alarms were shared between params
+- Fix auto-scroll in Event Viewer when sorting columns
+
+Version 0.26.1 Released 13-June-2014
+- added REST API for data downloada
+- added a way to provide simulated parameters using xml scenario files
+
+Version 0.26.0 Released 16-Apr-2014
+- merged PP with the XTCE database
+
+Version 0.25.0 Released 10-Apr-2014
+- Fix bug with name referencing in xtce tree
+- Expose time in ms to algorithm
+- split the StreamAdapter into HornetQTmProvider and HornetQTmService and same for PP
+- various XTCE compatibility improvements
+
+
+Version 0.24.2 Released 11-Mar-2014
+- Add support for booleans in spreadsheet
+- Fix support for longs and doubles in spreadsheet
+- Improve type safety of XTCE algorithms
+- Enable calibration for output parameters
+
+Version 0.24.1 Released
+- Algorithms: support externally defined (shared) functions
+- Algorithms: support interdependent algorithms
+- Algorithms: support libraries and other languages
+- Algorithms: put dictionary-like object in scriptengine
+- Algorithms: Add data quality indicators to ValueBinding
+- Added the packet(container) name in the packet replay
+- made the column separator configurable in the ParameterFormatter and CommandHistoryFormatter
+
+
+Version 0.24.0 Released 19-Feb-2014
+- Allow the SpreadsheetLoader to support sing-magnitude integer representation
+- Added possibility to have extra columns in the Event Viewer
+- Moved YConfiguration and ConfigurationException in the yamcs-api package to allow usage by external clients (e.g. TYNA)
+- Slightly modified the structure of different types of ReplayRequests to be more consistent
+- Added XTCE support for extraction of 64-bit integers
+- Fixed a bug with the extraction of some 3-byte integers
+- Add initial support for XTCE eng units in spreadsheet
+- Clean-up some code
+
+
+Version 0.23.5 Released 04-June-2013
+- fix typos in the user manual
+
+Version 0.23.4 Released 08-May-2013
+- implemented some workaround for archive browser in java 7
+- read the dates in UTC-TAI.history file in english no matter what the user.language property is
+
+Version 0.23.3 Released ??
+
+
+Version 0.23.2 Released ??
+- Implemented a simple TAI to UTC converter to remove dependency on orekit
+- renamed several config files to .sample such that they are not installed by default as part of the rpm, and a rpm can be made for specific configurations/deployments
+
+
+Version 0.23.1 Released 14-December-2012
+- Services and event decoders in yamcs.instance.yaml can now be specified with {class: classname, args:...} map (in addition to the old way of just specifiyng the classname)
+- The CompactFormatter log formatter prints always the full class name (it used to remove the com.spaceapplications prefix)
+- added 64 bits signed and unsigned integer parameter types
+- Merged yamcs-era branch:
+  - fixed a bug in translating processed parameters from DaSS to Yamcs parameters
+  - changed the flatfile PP Map reader to allow spaces in the NameSpace. 
+    WARNING: all entries have to be separated by tab now (in the past both tab and space were allowed as separators)
+  - added a test generator for DaSS Processed Parameters to be used for ERA-SC
+  - cleanup the old shell scripts from the bin directory
+- moved to github and separate from yamcs-cdmcs, yamcs-busoc, yamcs-erasmus and yamcs-dass
+
+
+
+Version 0.23.0 Released 4-December-2012
+- FilePollingTmProvider and FilePollingPpProvider can work without a spec and use the standard incomingDir from yamcs.yaml
+- Fixed a bug that was causing incorrect display in the Archive Browser when two packets had the same suffix (e.g. SYSTEM_HK and ECM1_HK)
+- added histogram.sh - useful to print the content of the histogram files (e.g. when in doubt if the Archive Browser) shows correct data
+
+Version 0.22.2 Released 26-November-2012
+- tested a fixed a problem related to yamcs cascading via HornetQ bridging
+- fixed the commanding and command history 
+- the port on which the webserver listens, is configurable in yamcs.yaml
+- added parameter selection dialog
+- change the getRequestDatabase to be able to retrieve a XtceDb both by configname and instance name
+- implemented authentication via HornetQ 
+
+
+Version 0.22.1 Released 13-August-2012
+- added Mdb2Scoe conversion
+- replaced EngineeringValue and RawValue protobuf definitions with a generic Value (NOTE: this requires reimporting all the PP data) 
+- merged commanding into XTCE (but still reusing old CGS MDB structures)
+- added retrieval of command history to the Archive Brwoser
+- improved detection of CCSDS packets to work for packets with payload type=0
+- moved the configuration settings from yarch.yaml to yamcs.yaml
+- improvded the documentation
+
+
+Version 0.22.0 Released 7-June-2012
+- added FASTER event decoder (in the yamcs-erasmus sub-project)
+- added web based USS (alpha version)
+- added PET parameter formater
+- merged TC MDB into XTCE
+- fixed retrieval of archive index from old CORBA yamcs-monitor (Erasmus Bug 532)
+- renamed org.yamcs.gpb into org.yamcs.protobuf 
+  the name of the package appears in the pp.def and event.def table definitions and has to be changed, sorry for that). 
+  The messages themselves have not changed, so the archive data is ok
+
+Version 0.21.5 Released 18-Apr-2012
+- prevent crash in case duplicate PPs are received at once
+- added a config enabledAtStartup that can be used to start tm,pp/tc providers/uplinkers in a disabled state
+- fix closing the histogram streams (erasmus bug 517)
+- introduced a mergeTime=20secons for the PP histogram (archive index) records (to prevent Erasmus bug 517)
+- detect low memory conditions in the archive browser and stop receiving histogram (archive index) records (Erasmus bug 517)
+- fixed a bug caused by change of the mdb.yaml "pploaders" to "ppLoaders" (Erasmus bug 518) 
+- fixed the display of String parameters in the packet viewer
+
+
+Version 0.21.4 Released 12-Apr-2012
+- fixed the processing of the 24 bits parameters (Erasmus bug 513)
+- fixed a NullPointerExceptin when encountering a PUS Structure without an opsname
+- changed tmhost, tmport, tchost, tcport,pphost, ppport, tmgroup, ppgroup to tmHost, tmPort... in dass.yaml, tcp.yaml and tmaptcap.yaml and multicast.yaml
+- changed commandqueue.yaml to command-queue.yaml and queuenames to queueNames
+- updated UTC-TAI.history (new leap second in July 2012)
+
+Version 0.21.3 Released 05-Apr-2012
+- read the SpaceSystem aliases and header from the XTCE file and use them for providing MDB identification via CIS
+- added the possibility to specify names for TM,PP/ TC uplinkers/providers
+
+Version 0.21.2 Released 04-Apr-2012
+- bug fix in DaSSPpProvider 
+- bug fix in TableDefinition deserializer - compressed parameter was not deserialized
+
+Version 0.21.1 Released 03-Apr-2012
+- fixed the packet viewer to work with multiple XTCE databases versions
+- simplified the AcquisitionStatus in parameter-value.proto to remove the values which are never set by yamcs and to rename STATIC to EXPIRED
+- made it possible to have comments in the spreadsheets
+- changed the specifications of dass.yaml to allow to specify vehicle and type which were hardcoded earlier
+- dass connectors generate events
+- added detailed info for the tm/pp links
+- removed the obsolete ProcessedParameter tab from the yamcs monitor
+
+
+Version 0.21.0 Released 17-Mar-2012
+- added enum values for streams
+- changed the api to allow for passing the namespace when requesting tm index
+- created generic histograms for any table
+- separated the completeness index from the packet overview which is now implemented using the yarch histogram feature 
+- added a yarch PROTOBUF that allows to store google protocol buffer encoded objects
+- changed the processed parameter recording to use protobuf encoding and to use a dynamic table where each parameter is one column
+- added the concept of SpaceSystem and distinction between names and qualified names
+- added the posibility to specify both stop and start in the archive browser (NLP Issue 2.5.1)
+- added an ignorePackets configuration to the cdmcs-mdb.yaml to be able to ignore packets from MDB overwritten by spreadsheets
+
+
+Version 0.20.1 Released 31-Jan-2012
+- switch the configuration files from java properties to yaml
+- cleanup all the hrdp (the old code can be found in https://subversion.spaceapplications.com/svn/yamcs/tags/trunk-before-hrdp-cleanup)
+- added the possibility to have multiple loaded MDBs at the same time
+- changed the table definition format from java serialization to yaml (with custom tags)
+- change the AbstractStream to catch all the Exceptions such that one bad subscriber does not crash the entire stream (Erasmus bug 482)
+- fixed the EDR Event Viewer to not crash when a short pwd packet was received (Erasmus bug 482)
+- default filenames for parameter and packet dump are Windows compatible (NLP Issue 2.5.3)
+- include header line in the events output (NLP Issue 2.5.4)
+
+Version 0.20.0 Released 21-Nov-2011
+- change the package name in yamcs-core, yamcs-api and yamcs-xtce and yamcs-cdcs from com.spaceapplications.yamcs to org.yamcs
+
+
+Version 0.19.4 Released 3-Nov-2011
+- change the format of the value in the (key,value) recording. It records now the index of the column before each column value.
+   This allows to dynamicall add columns to an existing row (required by the command history). ALL THE DATA HAS TO BE REINSERTED.
+- fixed the privileges of the CIS clients
+- added recording of command history into yarch
+- added realtime parameter subscription via hornetq
+
+
+
+Version 0.19.3 Released 19-Aug-2011
+ - changed the relpos in spreadsheets to start from 0 instead of 1
+ - fixed the string parameter decoding
+ - keep some statistics XtceStaxReader
+
+Version 0.19.2  Released 18-Aug-2011
+ - added client-side ack support in the yamcs-api
+ - added support for temporary queues in yamcs-api
+ - fixed the starting parameters of the YamcsMonitor and ArchiveBrowser
+ - added options to the command line parameter extractor
+ - detect a dead client and close the queue containing index information
+ - fixed the handling of response packets

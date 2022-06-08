@@ -1,0 +1,7 @@
+# Eclipse metadata
+/.settings/
+/.classpath
+/.project
+
+# Maven output
+/target/

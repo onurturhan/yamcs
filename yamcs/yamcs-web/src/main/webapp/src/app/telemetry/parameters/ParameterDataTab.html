@@ -1,0 +1,56 @@
+<div class="panel-content">
+  <form [formGroup]="filterForm">
+    <div class="filter-bar">
+      <app-select icon="access_time" formControlName="interval" [options]="intervalOptions">
+      </app-select>
+
+      <ng-container *ngIf="filterForm.value['interval'] === 'CUSTOM'">
+        <app-date-time-input formControlName="customStart"></app-date-time-input>
+        <app-date-time-input formControlName="customStop"></app-date-time-input>
+        <button class="ya-button" (click)="applyCustomDates()" [disabled]="filterForm.invalid">Apply</button>
+      </ng-container>
+
+      <ng-container *ngIf="filterForm.value['interval'] !== 'CUSTOM'">
+        <button class="ya-button" (click)="jumpToNow()">
+          Jump to now
+        </button>
+      </ng-container>
+
+      <app-dots *ngIf="dataSource.loading$ | async">
+      </app-dots>
+    </div>
+  </form>
+
+  <div class="table-status" [ngSwitch]="appliedInterval">
+    <div class="message-zone">
+      <app-text-action (click)="exportParameterData()">Download Data</app-text-action>
+    </div>
+    <span *ngSwitchCase="'PT1H'">
+      Showing data from <b>the last hour</b> ending at <b>{{ validStop | datetime }}</b> (Mission Time)
+    </span>
+    <span *ngSwitchCase="'PT6H'">
+      Showing data from <b>the last 6 hours</b> ending at <b>{{ validStop | datetime }}</b> (Mission Time)
+    </span>
+    <span *ngSwitchCase="'P1D'">
+      Showing data from <b>the last 24 hours</b> ending at <b>{{ validStop | datetime }}</b> (Mission Time)
+    </span>
+    <span *ngSwitchCase="'NO_LIMIT'">
+      Showing data from <b>all time</b>
+    </span>
+    <span *ngSwitchCase="'CUSTOM'">
+      Showing data from <b>{{ validStart | datetime }}</b> to <b>{{ validStop | datetime }}</b> (Mission Time)
+    </span>
+  </div>
+
+  <app-parameter-values-table [dataSource]="dataSource"></app-parameter-values-table>
+
+  <app-empty-message *ngIf="dataSource.isEmpty()">
+    No records found matching current filter in the selected time range.
+  </app-empty-message>
+
+  <mat-toolbar *ngIf="!(dataSource.loading$ | async) && !dataSource.isEmpty()">
+    <span style="flex: 1 1 auto"></span>
+    <button class="ya-button" [disabled]="!dataSource.hasMore()" (click)="loadMoreData()">Load More</button>
+    <span style="flex: 1 1 auto"></span>
+  </mat-toolbar>
+</div>

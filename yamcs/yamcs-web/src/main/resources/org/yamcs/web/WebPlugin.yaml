@@ -1,0 +1,194 @@
+options:
+  tag:
+    title: Tag
+    description:
+      - Short descriptor string of this Yamcs server. If present this is shown in the top
+        bar. The primary motivation for this option is to be able to distinguish between
+        multiple Yamcs servers in distributed deployments.
+    type: STRING
+    
+  extraHeaderHTML:
+    title: Extra Header HTML
+    description:
+      - Additional HTML to be included at the end of the <head></head> section.
+    type: STRING
+
+  displayBucket:
+    title: Display Bucket
+    description:
+      - Bucket where to find display resources.
+    type: STRING
+    default: displays
+
+  displayFolderPerInstance:
+    title: Display Folder Per Instance
+    description:
+      - Controls whether displays are specific to an instance.
+      - Avoid using this option, there are plans to deprecate it once instances can choose a
+        specific bucket in their configuration.
+    type: BOOLEAN
+    default: false
+
+  stackBucket:
+    title: Stack Bucket
+    description:
+      - Bucket where to find stacks.
+    type: STRING
+    default: stacks
+
+  stackFolderPerInstance:
+    title: Stack Folder Per Instance
+    description:
+      - Controls whether stacks are specific to an instance.
+      - Avoid using this option, there are plans to deprecate it once instances can choose a
+        specific bucket in their configuration.
+    type: BOOLEAN
+    default: false
+
+  staticRoot:
+    title: Static Root
+    description:
+      - Filesystem path where to locate the web files for the Yamcs Web Interface
+        (*.js, *.css, *.html, ...). If not specified, Yamcs will search the
+        classpath for these resources (preferred).
+      - It should only be necessary to use this option when doing development work
+        on the Yamcs Web Interface. It allows to run npm in watch mode for a
+        save-and-refresh development cycle.
+    type: STRING
+
+  twoStageCommanding:
+    title: Two-stage Commanding
+    description:
+      - Controls whether to protect commanding from from accidental clicks.
+        If true issuing a command will require two clicks at least (arm-and-issue).
+      - This feature is primarily intended for an operational setting.
+    type: BOOLEAN
+    default: false
+  
+  collapseInitializedArguments:
+    title: Collapse Initialized Arguments
+    description:
+      - Controls the display of argument fields of a command form. If true,
+        arguments with an initial value are collapsed by default.
+    type: BOOLEAN
+    default: true
+
+  commandClearances:
+    title: Require Level-based Command Clearance
+    description:
+      - Controls whether commands, in addition to privilege checking, require a user to
+        be cleared for sending them.
+      - This feature is primarily intended for an operational setting as an alternative
+        to supervised command queues.
+    type: BOOLEAN
+    default: false
+    deprecationMessage: This property is automatically derived. You can safely remove it from configuration.
+
+  commandExports:
+    title: Show Command Export Functionalities
+    description:
+      - Controls whether the button to generate an offline command report is shown.
+    type: BOOLEAN
+    default: true
+
+  completeness:
+    title: Show CCSDS Completeness Functionalities
+    description:
+      - Controls whether functionalities related to CCSDS completeness are shown.
+      - Only enable when the service CcsdsTmIndex is used.
+    type: BOOLEAN
+    deprecationMessage: This property is automatically derived. You can safely remove it from configuration.
+    
+  logoutRedirectUrl:
+    title: Logout Redirect URL
+    description:
+      - The URL to redirect to after logging out of Yamcs. If unset, users are
+        redirected to the built-in login page.
+    type: STRING
+
+  cfdp:
+    title: Show CFDP Functionalities
+    description:
+      - Controls whether functionalities related to CFDP are shown.
+      - Only enable when the service CfdpService is used.
+    type: BOOLEAN
+    deprecationMessage: This property is automatically derived. You can safely remove it from configuration.
+
+  dass:
+    title: Show DaSS Functionalities
+    description:
+      - Controls whether functionalities related to DaSS gap retrieval
+        are shown.
+      - This function requires proprietary services that are not available
+        in the open-source Yamcs distribution, and shall be removed whenever
+        technically possible.
+    type: BOOLEAN
+    default: false
+
+  tc:
+    title: Show Commanding Functionalities
+    description:
+      - Controls whether commmanding functionalities are shown.
+    type: BOOLEAN
+    default: true
+
+  tmArchive:
+    title: Show TM Archive Functionalities
+    description:
+      - Controls whether functionalities related to TM archiving are shown.
+    type: BOOLEAN
+    default: true
+
+  events:
+    title: Events
+    description:
+      - Configure event-related properties.
+    type: MAP
+    suboptions:
+      extraColumns:
+        title: Extra Columns
+        description:
+          - Additional event columns specific to a deployment.
+        type: LIST
+        elementType: MAP
+        suboptions:
+          id:
+            title: ID
+            description:
+              - Identifier of this column. This corresponds with a key in the
+                extra map of an event.
+            type: STRING
+            required: true
+          label:
+            title: Label
+            description:
+              - Descriptive name of this column.
+            type: STRING
+            required: true
+          visible:
+            title: Visible
+            description:
+              - Whether this column is visible by default.
+            type: BOOLEAN
+            default: true
+          alwaysVisible:
+            title: Always Visible
+            description:
+              - Whether this column always visible.
+              - If false, the user may choose to hide it.
+            type: BOOLEAN
+            default: false
+          after:
+            title: After
+            description:
+              - Identifier of the column after which to position this column.
+            type: STRING
+            required: true
+            choices:
+              - severity
+              - gentime
+              - message
+              - source
+              - type
+              - rectime
+              - seqNumber

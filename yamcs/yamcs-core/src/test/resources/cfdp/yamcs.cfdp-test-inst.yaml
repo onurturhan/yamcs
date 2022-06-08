@@ -1,0 +1,23 @@
+services:   
+  - class: org.yamcs.cfdp.CfdpService
+    args: 
+      inStream: cfdp_in
+      outStream: cfdp_out
+      localEntities:
+        - name: local12
+          id: 12
+      remoteEntities:
+        - name: remote15
+          id: 15
+      sleepBetweenPdus: 10
+      eofAckTimeout: 500
+      eofAckLimit: 1
+      finAckTimeout: 500
+      finAckLimit: 0
+      
+mdb:
+  - type: "emptyNode"
+    spec: "CFDP"
+
+streamConfig:
+  sqlFile: "src/test/resources/cfdp/cfdp-streams.sql"

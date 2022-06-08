@@ -1,0 +1,130 @@
+syntax="proto2";
+
+package yamcs.protobuf.commanding;
+option java_package = "org.yamcs.protobuf";
+
+import "yamcs/protobuf/yamcs.proto";
+import "yamcs/protobuf/mdb/mdb.proto";
+import "google/protobuf/timestamp.proto";
+
+
+message CommandId {
+  required int64 generationTime = 1;
+  required string origin = 2;
+  required int32 sequenceNumber = 3; //unique in relation to generationTime and origin
+  optional string commandName = 4;
+}
+
+enum QueueState {
+  BLOCKED = 1;
+  DISABLED = 2;
+  ENABLED = 3;
+}
+
+message CommandQueueInfo {
+  optional string instance = 1;
+  optional string processorName = 2;
+  optional string name = 3;
+  optional QueueState state = 4;
+  optional int32 nbSentCommands = 5;
+  optional int32 nbRejectedCommands = 6;
+  optional int32 stateExpirationTimeS = 7;
+  repeated CommandQueueEntry entry = 8;
+  optional int32 order = 9;
+  repeated string users = 10;
+  repeated string groups = 11;
+  optional mdb.SignificanceInfo.SignificanceLevelType minLevel = 12;
+}
+
+/*One entry (command) in the command queue*/
+message CommandQueueEntry {
+  optional string instance = 1;
+  optional string processorName = 2;
+  optional string queueName = 3;
+  optional string id = 14;
+  optional string origin = 15;
+  optional int32 sequenceNumber = 16;
+  optional string commandName = 17;
+
+  // Deprecated. If you require a string representation of this
+  // command, you can build it based on the fields ``commandName``
+  // and ``assignments``.
+  optional string source = 5 [deprecated=true];
+  
+  repeated CommandAssignment assignments = 18;
+  optional bytes binary = 6;
+  optional string username = 7;
+  
+  // Deprecated. This used to be used for manual accept/reject
+  // of a single queued command, however this can now be done
+  // using the ``id`` field instead.
+  optional string uuid = 9 [deprecated=true];
+
+  optional string comment = 11;
+  optional google.protobuf.Timestamp generationTime = 12;
+  
+  // If true, the command has been accepted and is due for release
+  // as soon as transmission constraints are satisfied.
+  optional bool pendingTransmissionConstraints = 13;
+}
+
+message CommandQueueEvent {
+  enum Type {
+    COMMAND_ADDED = 1;
+    COMMAND_REJECTED = 2;
+    COMMAND_SENT = 3;
+    COMMAND_UPDATED = 4;
+  }
+  optional Type type = 1;
+  optional CommandQueueEntry data = 2;
+}
+
+message CommandQueueRequest {
+  optional CommandQueueInfo queueInfo = 1; // for SetQueueState
+  optional CommandQueueEntry queueEntry = 2; //for SendCommand and RejectCommand
+  optional bool rebuild = 3[default=false]; //if rebuild is true, the binary packet will be recreated to include new time and sequence count
+}
+
+/* this message is sent as response to validate, in case the significance is defined for a commands*/
+message CommandSignificance {
+  optional int32 sequenceNumber = 1; //the sequence number of the command sent
+  optional mdb.SignificanceInfo significance = 2;
+}
+
+//can be used when sending commands to affect the way post transmission verifiers are running
+message VerifierConfig {
+  message CheckWindow {
+    optional int64 timeToStartChecking = 1;
+    optional int64 timeToStopChecking = 2;
+  }
+
+  optional bool disable = 2; //disable the verifier
+  optional CheckWindow checkWindow = 3;
+}
+
+message CommandHistoryAttribute {
+  optional string name = 1;
+  optional Value value = 2;
+  optional int64 time = 3;
+}
+
+message CommandAssignment {
+  optional string name = 1;
+  optional Value value = 2;
+  optional bool userInput = 3;
+}
+
+message CommandHistoryEntry {
+  optional string id = 7;
+  optional string commandName = 8;
+  optional string origin = 9;
+  optional int32 sequenceNumber = 10;
+  optional CommandId commandId = 1;
+  repeated CommandHistoryAttribute attr = 3;
+  optional google.protobuf.Timestamp generationTime = 6;
+
+  // Deprecated. Use the field ``assignments`` instead.
+  repeated CommandAssignment assignment = 5 [deprecated=true];
+
+  repeated CommandAssignment assignments = 11;
+}

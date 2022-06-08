@@ -1,0 +1,66 @@
+syntax = "proto2";
+
+option java_package = "org.yamcs.yarch.protobuf";
+
+import "yamcs/protobuf/yamcs.proto";
+import "yamcs/protobuf/events/events.proto";
+import "yamcs/protobuf/pvalue/pvalue.proto";
+import "yamcs/protobuf/mdb/mdb.proto";
+
+
+//this message has been copied in Yamcs 5 from pvalue.proto 
+// and is used when storing parameter values in tables (ParameterValueColumnSerializer.java).
+//
+// if the name of the parameter is the same with the column name, it is not stored.
+// For compatiblity with Yamcs 4, the protobuf field numbers are kept unchanged 
+message ParameterValue {
+	optional string name = 1;
+    optional yamcs.protobuf.Value rawValue = 2;
+    optional yamcs.protobuf.Value engValue = 3;
+    optional int64 acquisitionTime = 4;
+    optional int64 generationTime = 5;
+    optional yamcs.protobuf.pvalue.AcquisitionStatus acquisitionStatus = 6;
+    optional bool processingStatus = 7;
+    optional yamcs.protobuf.pvalue.MonitoringResult monitoringResult = 8;
+    optional yamcs.protobuf.pvalue.RangeCondition rangeCondition = 9;
+
+    // Context-dependent ranges
+    repeated yamcs.protobuf.mdb.AlarmRange alarmRange = 25;
+
+    // How long (in milliseconds) this parameter value is valid
+    // Note that there is an option when subscribing to parameters to get
+    // updated when the parameter values expire. 
+    optional int64 expireMillis = 26;
+}
+
+message Event {
+    optional string source = 1;
+    optional int64 generationTime = 2;
+    optional int64 receptionTime = 3;
+    optional int32 seqNumber = 4;
+    optional string type = 5;
+    required string message = 6;
+    optional yamcs.protobuf.events.Event.EventSeverity severity = 7[default=INFO];
+  
+    // Set by API when event was posted by a user
+    optional string createdBy = 10;
+
+    // Additional properties
+    map<string, string> extra = 11;
+}
+
+enum ProtoDataType {
+  //error in replay
+  DT_ERROR = 1;
+
+  //the replay status has changed (e.g. stopped or closed) the body contains a ReplayStatus
+  STATE_CHANGE = 2;
+
+  TM_PACKET = 3;
+  PP = 4;
+  EVENT = 5;
+  ARCHIVE_INDEX = 6;
+  ARCHIVE_TAG = 7;
+  PARAMETER = 8;
+  CMD_HISTORY = 9;
+}

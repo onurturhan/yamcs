@@ -1,0 +1,211 @@
+syntax="proto2";
+
+package yamcs.protobuf.packets;
+
+option java_package = "org.yamcs.protobuf";
+option java_outer_classname = "PacketsServiceProto";
+option java_multiple_files = true;
+
+import "google/protobuf/timestamp.proto";
+
+import "yamcs/api/annotations.proto";
+import "yamcs/api/httpbody.proto";
+import "yamcs/protobuf/packets/packets.proto";
+
+
+service PacketsApi {
+
+  // List packet names
+  rpc ListPacketNames(ListPacketNamesRequest) returns (ListPacketNamesResponse) {
+    option (yamcs.api.route) = {
+      get: "/api/archive/{instance}/packet-names"
+    };
+  }
+  
+  // List packets
+  rpc ListPackets(ListPacketsRequest) returns (ListPacketsResponse) {
+    option (yamcs.api.route) = {
+      get: "/api/archive/{instance}/packets"
+    };
+  }
+  
+  // Get a packet
+  rpc GetPacket(GetPacketRequest) returns (TmPacketData) {
+    option (yamcs.api.route) = {
+      get: "/api/archive/{instance}/packets/{gentime}/{seqnum}"
+    };
+  }
+  
+  // Streams back packets
+  rpc StreamPackets(StreamPacketsRequest) returns (stream TmPacketData) {
+    option (yamcs.api.route) = {
+      post: "/api/stream-archive/{instance}:streamPackets"
+      body: "*"
+    };
+  }
+  
+  // Export a raw packet
+  rpc ExportPacket(ExportPacketRequest) returns (yamcs.api.HttpBody) {
+    option (yamcs.api.route) = {
+      get: "/api/archive/{instance}/packets/{gentime}/{seqnum}:export"
+    };
+  }
+  
+  // Export raw packets
+  rpc ExportPackets(ExportPacketsRequest) returns (stream yamcs.api.HttpBody) {
+    option (yamcs.api.route) = {
+      get: "/api/archive/{instance}:exportPackets"
+    };
+  }
+  
+  // Subscribe to packets
+  //
+  // This subscription is performed at stream or processor level.
+  //
+  // The identifier of the packets is not filled in.
+  rpc SubscribePackets(SubscribePacketsRequest) returns (stream TmPacketData) {
+    option (yamcs.api.websocket) = {
+      topic: "packets"
+    };
+  }
+  
+  // Subscribe to containers
+  rpc SubscribeContainers(SubscribeContainersRequest) returns (stream ContainerData) {
+    option (yamcs.api.websocket) = {
+      topic: "containers"
+    };
+  }
+}
+
+message ListPacketNamesRequest {
+  // Yamcs instance name.
+  optional string instance = 1;
+}
+
+message ListPacketNamesResponse {
+  // Packet name.
+  repeated string name = 1;
+}
+
+message ListPacketsRequest {
+  // Yamcs instance name.
+  optional string instance = 1;
+  
+  // The zero-based row number at which to start outputting results. Default: ``0``
+  optional int64 pos = 2;
+  
+  // The maximum number of returned records per page. Choose this value too high
+  // and you risk hitting the maximum response size limit enforced by the server.
+  // Default: ``100``
+  optional int32 limit = 3;
+  
+  // The order of the returned results. Can be either ``asc`` or ``desc``. Default: ``desc``
+  optional string order = 4;
+  
+  // The archived name of the packets. Names must match exactly.
+  repeated string name = 5;
+
+  // Continuation token returned by a previous page response.
+  optional string next = 6;
+  
+  // Filter the lower bound of the packet's generation time. Specify a date
+  // string in ISO 8601 format. This bound is inclusive.
+  optional google.protobuf.Timestamp start = 7;
+  
+  // Filter the upper bound of the packet's generation time. Specify a date
+  // string in ISO 8601 format. This bound is exclusive.
+  optional google.protobuf.Timestamp stop = 8;
+}
+
+message ListPacketsResponse {
+  repeated TmPacketData packet = 1;
+
+  // Token indicating the response is only partial. More results can then
+  // be obtained by performing the same request (including all original
+  // query parameters) and setting the ``next`` parameter to this token.
+  optional string continuationToken = 2;
+}
+
+message GetPacketRequest {
+  // Yamcs instance name.
+  optional string instance = 1;
+  
+  // An exact match of the packet's generation time in
+  // ISO 8601 format.
+  optional google.protobuf.Timestamp gentime = 2;
+
+  // Yamcs-specific archive distinguisher
+  optional int32 seqnum = 3;
+}
+
+message StreamPacketsRequest {
+  // Yamcs instance name.
+  optional string instance = 1;
+  optional google.protobuf.Timestamp start = 2;
+  optional google.protobuf.Timestamp stop = 3;
+  repeated string name = 4;
+}
+
+message ExportPacketRequest {
+  // Yamcs instance name.
+  optional string instance = 1;
+  
+  // An exact match of the packet's generation time in
+  // ISO 8601 format.
+  optional google.protobuf.Timestamp gentime = 2;
+
+  // Yamcs-specific archive distinguisher
+  optional int32 seqnum = 3;
+}
+
+message ExportPacketsRequest {
+  // Yamcs instance name.
+  optional string instance = 1;
+  
+  // Filter the lower bound of the packet's generation time. Specify a date
+  // string in ISO 8601 format. This bound is inclusive.
+  optional google.protobuf.Timestamp start = 2;
+  
+  // Filter the upper bound of the packet's generation time. Specify a date
+  // string in ISO 8601 format. This bound is exclusive.
+  optional google.protobuf.Timestamp stop = 3;
+  
+  // The archived name of the packets. Names must match exactly.
+  repeated string name = 4;
+}
+
+message SubscribePacketsRequest {
+  // Yamcs instance name.
+  optional string instance = 1;
+
+  // Stream name. This is mutually exclusive with the field ``processor``.
+  optional string stream = 2;
+  
+  // Processor name. This is mutually exclusive with the field ``stream``.
+  optional string processor = 3;
+}
+
+message SubscribeContainersRequest {
+  // Yamcs instance name.
+  optional string instance = 1;
+  
+  // Processor name.
+  optional string processor = 2;
+  
+  // Container names to subscribe to.
+  repeated string names = 3;
+}
+
+message ContainerData {
+  // Container name.
+  optional string name = 1;
+
+  // When the container's packet was generated (packet time)
+  optional google.protobuf.Timestamp generationTime = 2;
+
+  // Whent the container's packet was received by Yamcs
+  optional google.protobuf.Timestamp receptionTime = 3;
+
+  // Container bytes
+  optional bytes binary = 4;
+}

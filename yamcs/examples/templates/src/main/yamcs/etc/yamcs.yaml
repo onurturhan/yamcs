@@ -1,0 +1,7 @@
+services:
+  - class: org.yamcs.http.HttpServer
+
+instances: []
+
+yamcs-web:
+  tag: "Example: templates"

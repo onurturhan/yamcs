@@ -1,0 +1,310 @@
+syntax="proto2";
+
+package yamcs.protobuf.archive;
+
+option java_package = "org.yamcs.protobuf";
+option java_outer_classname = "ParameterArchiveServiceProto";
+option java_multiple_files = true;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+import "yamcs/api/annotations.proto";
+import "yamcs/protobuf/archive/archive.proto";
+import "yamcs/protobuf/pvalue/pvalue.proto";
+import "yamcs/protobuf/yamcs.proto";
+
+service ParameterArchiveApi {
+
+  // Rebuild range
+  //
+  // The back filler has to be enabled for this purpose. The back filling process does not
+  // remove data but just overwrites it. That means that if the parameter replay returns
+  // less parameters than originally stored in the archive, the old parameters will still
+  // be found in the archive.
+  //
+  // It also means that if a replay returns the parameter of a different type than
+  // originally stored, the old ones will still be stored. This is because the parameter
+  // archive treats parameter with the same name but different type as different parameters.
+  // Each of them is given an id and the id is stored in the archive.
+  rpc RebuildRange(RebuildRangeRequest) returns (google.protobuf.Empty) {
+    option (yamcs.api.route) = {
+      post: "/api/archive/{instance}/parameterArchive:rebuild"
+      body: "*"
+      offloaded: true
+    };
+  }
+
+  // Delete partitions
+  //
+  // Response is of type string and list the partitions that have been removed.
+  rpc DeletePartitions(DeletePartitionsRequest) returns (StringMessage) {
+    option (yamcs.api.route) = {
+      post: "/api/archive/{instance}/parameterArchive:deletePartitions"
+      body: "*"
+    };
+  }
+
+  // Get parameter samples
+  //
+  // This divides the query interval in a number of intervals and returns aggregated
+  // statistics (max,min,avg) about each interval.
+  //
+  // This operation is useful when making high-level overviews (such as plots) of a
+  // parameter's value over large time intervals without having to retrieve each
+  // and every individual parameter value.
+  //
+  // By default this operation fetches data from the parameter archive and/or
+  // parameter cache. If these services are not configured, you can still get
+  // correct results by specifying the option ``source=replay`` as detailed below.
+  rpc GetParameterSamples(GetParameterSamplesRequest) returns (pvalue.TimeSeries) {
+    option (yamcs.api.route) = {
+      get: "/api/archive/{instance}/parameters/{name*}/samples"
+      field_mask_root: "sample"
+    };
+  }
+  
+  // Get parameter ranges
+  //
+  // A range is a tuple ``(start, stop, value, count)`` that represents the time
+  // interval for which the parameter has been steadily coming in with the same
+  // value. This request is useful for retrieving an overview for parameters that
+  // change unfrequently in a large time interval. For example an on/off status
+  // of a device, or some operational status. Two consecutive ranges containing
+  // the same value will be returned if there was a gap in the data. The gap is
+  // determined according to the parameter expiration time configured in the
+  // Mission Database.
+  rpc GetParameterRanges(GetParameterRangesRequest) returns (pvalue.Ranges) {
+    option (yamcs.api.route) = {
+      get: "/api/archive/{instance}/parameters/{name*}/ranges"
+      field_mask_root: "range"
+    };
+  }
+  
+  // List parameter history
+  rpc ListParameterHistory(ListParameterHistoryRequest) returns (ListParameterHistoryResponse) {
+    option (yamcs.api.route) = {
+      get: "/api/archive/{instance}/parameters/{name*}"
+    };
+  }
+
+  // Get information about the archived parameters.
+  //
+  // Each combination of (parameter name, raw type, enginnering type) is assigned a unique parameter id.
+  // 
+  // The parameters are grouped such that the samples of all parameters from one group have the same timestamp.
+  // For example all parameters extracted from one TM packet have usually the same timestamp and are part of the same group.
+  //
+  // Each group is assigned a unique group id.
+  //
+  // A parameter can be part of multiple groups - for instance a parameter appearing in the header of a packet is part of all groups made
+  // by inherited containers (i.e. each packet with that header will compose another group).
+  //
+  // For each group, the parameter archive stores one common record for the timestamps and individual records for the raw and engineering
+  // values of each parameter. If a parameter appears in multiple groups, retrieving its value means combining (time based merge operation)
+  // the records beloging to the groups in which the parameter appears.
+  //
+  // The response to this method contains the parameter id, name, engineering type, raw type and the groups of which this parameter is part of.
+  rpc GetArchivedParametersInfo(GetArchivedParametersInfoRequest) returns (ArchivedParametersInfoResponse) {
+    option (yamcs.api.route) = {
+      get: "/api/archive/{instance}/parameterArchive/info/parameters"
+    };
+  }
+
+  // For a given parameter id, get the list of segments available for that parameter.
+  // A segment contains multiple samples (maximum ~70 minutes) of the same parameter
+  //
+  rpc GetArchivedParameterSegments(GetArchivedParameterSegmentsRequest) returns (ArchivedParameterSegmentsResponse) {
+    option (yamcs.api.route) = {
+      get: "/api/archive/{instance}/parameterArchive/info/segments/{pid*}"
+    };
+  }
+
+  //For a given group id, get the list of parameters which are part of the group
+  rpc GetArchivedParameterGroup(GetArchivedParameterGroupRequest) returns (ArchivedParameterGroupResponse) {
+    option (yamcs.api.route) = {
+      get: "/api/archive/{instance}/parameterArchive/info/groups/{gid*}"
+    };
+  }
+
+}
+
+// Note that the archive is built in segments of approximatively 70 minutes, therefore the
+// real start will be before the specified start and the real stop will be after the
+// specified stop.
+message RebuildRangeRequest {
+  // Yamcs instance name.
+  optional string instance = 1;
+  
+  // Start rebuilding from here. Specify a date string in ISO 8601 format.
+  optional google.protobuf.Timestamp start = 2;
+  
+  // Rebuild until here. Specify a date string in ISO 8601 format.
+  optional google.protobuf.Timestamp stop = 3;
+}
+
+message DeletePartitionsRequest {
+  // Yamcs instance name.
+  optional string instance = 1;
+  
+  // Start with the partition that contains this timestamp. Specify a date string in ISO 8601 format.
+  optional google.protobuf.Timestamp start = 2;
+  
+  // Stop with the partition that contains this timestamp. The stop partition will be removed as
+  // well. Specify a date string in ISO 8601 format.
+  optional google.protobuf.Timestamp stop = 3;
+}
+
+
+message GetParameterRangesRequest {
+  // Yamcs instance name.
+  optional string instance = 1;
+
+  // Parameter name.
+  optional string name = 2;
+  
+  // Filter the lower bound of the parameter's generation time. Specify a date
+  // string in ISO 8601 format.
+  optional google.protobuf.Timestamp start = 3;
+  
+  // Filter the upper bound of the parameter's generation time. Specify a date
+  // string in ISO 8601 format.
+  optional google.protobuf.Timestamp stop = 4;
+  
+  // Time in milliseconds. Any gap (detected based on parameter expiration) smaller than
+  // this will be ignored. However if the parameter changes value, the ranges will still
+  // be split.
+  optional int64 minGap = 5;
+  
+  // Time in milliseconds. If the distance between two subsequent values of the parameter
+  // is bigger than this value (but smaller than the parameter expiration), then an
+  // artificial gap will be constructed. This also applies if there is no parameter
+  // expiration defined for the parameter.
+  optional int64 maxGap = 6;
+  
+  // Disable loading of parameters from the parameter cache. Default: ``false``.
+  optional bool norealtime = 7;
+  
+  // The name of the processor from which to use the parameter cache. Default: ``realtime``.
+  optional string processor = 8;
+
+  optional string source = 9;
+  
+  // Time in milliseconds of the minimum range to be returned. If the data changes more often,
+  //a new range will not be created but the data will be added to the old range.
+  optional int64 minRange = 10;
+  
+  // Maximum number of distinct values to be returned. The maximum number applies across all ranges
+  // and is meant to limit the amount of data that is being retrieved.
+  // The retrieved data has a count for each value as well as a total count.
+  // The difference between the total count and the sum of the individual counts can be used to compute
+  // the number of unsent values.
+  optional int32 maxValues = 11;
+}
+
+// Get information about the parameters stored in the Parameter Archive 
+message GetArchivedParametersInfoRequest {
+  optional string instance = 1;
+
+  // The search keywords.
+  optional string q = 2;
+
+  // List only direct child parameters of the specified system. 
+  // Only the parameters whose fully qualified name start with system will be returned.
+  //
+  // When ``system`` and ``q`` are used together, the q search will be matched on the parameters 
+  // filtered by system.
+  optional string system = 3;
+
+  // The maximum number of returned parameters. Choose this value too
+  // high and you risk hitting the maximum response size limit enforced by the
+  // server. Default: ``100``
+  optional int32 limit = 7;
+
+}
+
+message GetArchivedParameterSegmentsRequest {
+  //Yamcs instance
+  optional string instance = 1;
+
+  //parameter id
+  optional uint32 pid = 2;
+
+  //get the segments overlapping with [start, stop) interval
+  optional google.protobuf.Timestamp start = 3;
+  optional google.protobuf.Timestamp stop = 4;
+}
+
+
+// This message contains information about one parameter in the parameter archive
+// Each (parameter name, raw type, engineering type) is assigned a unique id and all 
+// the samples are stored with that id. 
+// If a MDB change results in the parameter having a different enginnering or raw type, 
+// a new pid will be allocated.
+// This is why for the same parameter name, we can have multiple parameter ids.
+// The parameter archive will contain data even for parameters removed from the MDB
+message ArchivedParameterInfo {
+  //parameter id
+  optional uint32 pid = 1;
+  
+  //parameter fully qualified name
+  optional string fqn = 2;
+  
+  // parameter raw type
+  optional Value.Type rawType = 3;
+  
+  //parameter engineering type
+  optional Value.Type engType = 4;
+  
+  //the groups from which this parameter is part of
+  repeated uint32 gids = 5;
+}
+
+message ArchivedParametersInfoResponse {
+	repeated ArchivedParameterInfo parameters = 1;
+}
+
+message ArchiveParameterSegmentInfo {
+  // Multiple parameters are grouped such that all in one group have
+  // the same timestamps. For example: all parameters extracted from
+  // one TM packet usually have the same timestamp.
+  // This way we have a unique segment storing the timestamps for a
+  // group of parameters. The groupId can be used to retrieve all parameters
+  // from the same group.
+  optional uint32 groupId = 1;
+  
+  //the segment start
+  optional google.protobuf.Timestamp start = 2;
+  
+  //the segment end 
+  optional google.protobuf.Timestamp end = 3;
+  
+  //the number of samples in the segment
+  optional uint32 count = 4;
+}
+
+// Recorded segments for the requested parameter
+message ArchivedParameterSegmentsResponse {
+  optional ArchivedParameterInfo parameterInfo = 1;
+  repeated ArchiveParameterSegmentInfo segments = 2;
+}
+
+message GetArchivedParameterGroupRequest {
+  // Yamcs instance name
+  optional string instance = 1;
+
+  // Group identifier
+  optional uint32 gid = 2;
+}
+
+message ArchivedParameterGroupResponse {
+  // Group identifier
+  optional uint32 gid = 1;
+  
+  // Parameters belonging to the group
+  repeated ArchivedParameterInfo parameters = 2;
+}
+
+message StringMessage {
+  required string message = 1;
+}
