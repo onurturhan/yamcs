@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<!-- saved from url=(0033)https://yamcs.org/getting-started -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Getting Started</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com/">
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+    <link rel="stylesheet" href="./Getting Started_files/css2">
+    <link rel="stylesheet" href="./Getting Started_files/css2(1)">
+    <link rel="stylesheet" href="./Getting Started_files/all.css">
+    <link rel="stylesheet" href="./Getting Started_files/style.1cb6142de788.css">
+    <link rel="stylesheet" href="./Getting Started_files/pygments.8c646ed958ba.css">
+
+    
+    <link rel="apple-touch-icon" sizes="180x180" href="https://yamcs.org/static/apple-touch-icon.df111fe311cb.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="https://yamcs.org/static/favicon-32x32.f672d83772ee.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="https://yamcs.org/static/favicon-16x16.57adf3baeaa9.png">
+    <link rel="manifest" href="https://yamcs.org/static/site.3e85fc295e70.webmanifest">
+    <link rel="shortcut icon" href="https://yamcs.org/static/favicon.3ecba874c4b1.ico">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="msapplication-config" content="/static/browserconfig.9c211d157b37.xml">
+    <meta name="theme-color" content="#3b4a89">
+
+    <meta property="og:title" content="Yamcs Mission Control">
+    <meta property="og:image" content="https://yamcs.org/static/logo.png">
+    <meta property="og:image:alt" content="A framework for mission control.">
+    <meta property="og:site_name" content="Yamcs">
+    <meta property="og:type" content="object">
+    <meta property="og:url" content="https://yamcs.org/getting-started">
+    <meta property="og:description" content="A framework for mission control.">
+
+    
+    <script async="" src="./Getting Started_files/js"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-WYHVGW8JEM');
+    </script>
+    
+
+    <script>
+        window.addEventListener('load', function () {
+            var els = document.getElementsByClassName('masked-e');
+            for (var i = 0; i < els.length; i++) {
+                var el = els[i];
+                var v = atob(el.getAttribute('data-m1')) + atob(el.getAttribute('data-m2'));
+                el.setAttribute('hr' + 'ef', 'ma' + 'ilt' + 'o:' + v);
+                if (el.getAttribute('data-m3') !== 'no') {
+                    el.innerText = v;
+                }
+            }
+        });
+        window.toggleMenu = function () {
+            var el = document.getElementById("top-bar");
+            if (el.className === 'top-bar') {
+                el.className += ' toggled';
+            } else {
+                el.className = 'top-bar';
+            }
+        };
+    </script>
+
+    
+<meta name="description" content="Get Yamcs up and running with Maven and Java">
+
+</head>
+
+<body>
+    <div id="content">
+        <div class="main with-sidebar">
+            <div id="top-bar" class="top-bar">
+                <a href="https://yamcs.org/" style="display: inline-block">
+                    <img src="./Getting Started_files/yamcs_160.51cb41174739.png">
+                </a>
+                <nav class="nav">
+                    <ul class="nav-menu">
+                        <li>
+                            <a class="page-link" href="https://docs.yamcs.org/">DOCUMENTATION</a>
+                        </li>
+                        <li>
+                            <a class="page-link" href="https://yamcs.org/about">ABOUT US</a>
+                        </li>
+                        <li>
+                            <a class="page-link" href="https://github.com/yamcs">
+                                GITHUB
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+                <div class="filler"></div>
+                <div class="search">
+                    <form action="https://docs.yamcs.org/search/" method="GET">
+                        <div class="search-icon">
+                            <i class="fa fa-search"></i>
+                        </div>
+                        <input name="q" placeholder="Search documentation" autocomplete="off" spellcheck="false" value="">
+                    </form>
+                </div>
+                <a class="hamburger" href="javascript:void(0);" onclick="toggleMenu()">
+                    <span class="fa fa-fw fa-bars"></span>
+                </a>
+            </div>
+
+            <div class="page">
+                
+                
+
+                <div class="main-content">
+                    
+    <h1>Getting Started</h1>
+
+                    
+<div style="max-width: 1000px; width: 100%">
+    <h2>Purpose</h2>
+
+    <p>
+        This guide shows you how to get Yamcs up and running with Maven. Maven is a popular Java build tool available in most package repositories.
+    </p>
+    <p>
+        The base features of Yamcs do not require Java knowledge, however as soon as you dive into custom data links and other extensions, you will need a build tool anyway.
+    </p>
+
+
+    <h2>Prerequisites</h2>
+    <ul>
+        <li>Java 11</li>
+        <li>Maven 3.1+</li>
+        <li>Linux x64 or macOS</li>
+    </ul>
+
+
+    <h2>Project Setup</h2>
+    <p>
+        Clone the quickstart repository to kickstart a minimal Yamcs project:
+    </p>
+
+<div class="highlight"><pre><span></span>git clone https://github.com/yamcs/quickstart.git myproject
+</pre></div>
+
+
+    <p>
+        This will generate a project structure in the following way:
+    </p>
+
+<div class="highlight"><pre><span></span>myproject/
+|-- README.md
+|-- pom.xml
+|-- simulator.py
+|-- src
+|   `-- main
+|       |-- java
+|       |&nbsp;&nbsp; `-- com
+|       |&nbsp;&nbsp;     `-- example
+|       |&nbsp;&nbsp;         `-- myproject
+|       |&nbsp;&nbsp;             |-- MyCommandPostprocessor.java
+|       |&nbsp;&nbsp;             `-- MyPacketPreprocessor.java
+|       `-- yamcs
+|           |-- etc
+|           |&nbsp;&nbsp; |-- processor.yaml
+|           |&nbsp;&nbsp; |-- yamcs.myproject.yaml
+|           |&nbsp;&nbsp; `-- yamcs.yaml
+|           `-- mdb
+|               `-- xtce.xml
+`-- testdata.ccsds
+</pre></div>
+
+
+    <ul>
+        <li>Custom Java classes (if any) go into <code>${project.basedir}/src/main/java/</code>.</li>
+        <li>Yamcs configuration goes into <code>${project.basedir}/src/main/yamcs/</code> in subfolders <code>etc/</code> and <code>mdb/</code>.</li>
+    </ul>
+
+    <p>
+        The file <code>pom.xml</code> is the entrypoint for subsequent Maven builds. It adds dependencies to the desired Yamcs modules. At least a dependency to <code>yamcs-core</code> is required. <code>yamcs-web</code> is another common dependency that makes Yamcs host a prebuilt copy of the Yamcs web interface.
+    </p>
+
+<div class="highlight"><pre><span></span><span class="nt">&lt;dependencies&gt;</span>
+  <span class="nt">&lt;dependency&gt;</span>
+    <span class="nt">&lt;groupId&gt;</span>org.yamcs<span class="nt">&lt;/groupId&gt;</span>
+    <span class="nt">&lt;artifactId&gt;</span>yamcs-core<span class="nt">&lt;/artifactId&gt;</span>
+    <span class="nt">&lt;version&gt;</span>${yamcsVersion}<span class="nt">&lt;/version&gt;</span>
+  <span class="nt">&lt;/dependency&gt;</span>
+  <span class="nt">&lt;dependency&gt;</span>
+    <span class="nt">&lt;groupId&gt;</span>org.yamcs<span class="nt">&lt;/groupId&gt;</span>
+    <span class="nt">&lt;artifactId&gt;</span>yamcs-web<span class="nt">&lt;/artifactId&gt;</span>
+    <span class="nt">&lt;version&gt;</span>${yamcsVersion}<span class="nt">&lt;/version&gt;</span>
+  <span class="nt">&lt;/dependency&gt;</span>
+  ...
+<span class="nt">&lt;/dependencies&gt;</span>
+</pre></div>
+
+
+
+    <h2>Running Yamcs</h2>
+    <p>
+        To now run your Yamcs application:
+    </p>
+
+<div class="highlight"><pre><span></span><span class="nb">cd</span> myproject/
+mvn yamcs:run
+</pre></div>
+
+
+    <p>
+        By default, Yamcs will run from the <code>target/yamcs/</code> directory.
+    </p>
+
+    <p>
+        View the Yamcs web interface by visiting <a href="http://localhost:8090/" target="_blank">http://localhost:8090</a>
+    </p>
+
+    <p>
+        The homepage shows you the available <em>instances</em>. Each instance corresponds to a separate database with custom Yamcs configuration. In this example we have just a single instance called <code>myproject</code>. In more advanced scenarios, you could use instances to group data by simulation session, mission environment or any other criteria.
+    </p>
+
+    <img src="./Getting Started_files/homepage.6889d925ec1a.png" class="content">
+
+    <p>
+        If we now navigate to the main page for our <code>myproject</code> instance, we see not much going on.
+    </p>
+
+    <img src="./Getting Started_files/instance.2041f145986f.png" class="content">
+
+    <p>
+        So let's liven things up a bit by pushing telemetry packets to Yamcs. In another terminal:
+    </p>
+
+<div class="highlight"><pre><span></span>python simulator.py
+</pre></div>
+
+
+    <p>
+        This Python script simulates a space system that emits packets at 1 Hz. Each packets is put in a UDP frame and sent to the port 10015 on localhost. This port is bound to by the <code>udp-in</code> link of Yamcs. You can monitor this link from the <strong>Links</strong> menu item of the <code>myproject</code> instance. The counter increases with each incoming packet.
+    </p>
+
+    <img src="./Getting Started_files/links.c96c44917fcf.png" class="content">
+
+    <p>
+        Navigate to <strong>Telemetry &gt; Parameters</strong> to see the individual parameters that are being extracted from the received packets.
+    </p>
+
+    <img src="./Getting Started_files/parameters.4b71b0805219.png" class="content">
+
+    <p>
+        Yamcs knows how to decode packets into parameters by applying the definitions contained in a <em>Mission Database (MDB)</em>. We can explore the applicable definitions of our example project by navigating to the pages under the <strong>MDB</strong> menu item:
+    </p>
+
+    <img src="./Getting Started_files/mdb.d0ca6c1af99e.png" class="content">
+
+    <p>
+        The Mission Database describes not only how to decode incoming telemetry, but also describes how to encode outgoing telecommands.
+    </p>
+    <p>
+        So let's send one of these telecommands. Navigate to <strong>Commanding &gt; Send a command</strong> and choose one of the available commands.
+    </p>
+
+    <img src="./Getting Started_files/command.f745607f4ff9.png" class="content">
+
+    <p>
+        When you have provided all command arguments, push <strong>Send</strong>. This will navigate you the individual report for that command:
+    </p>
+
+    <img src="./Getting Started_files/command-report.73a6a41de807.png" class="content">
+
+    <p>
+        We see acknowledgments that indicate that Yamcs has successfully written the command on the network channel. In the output of the simulator we see that the command was received. The simulator runs its own UDP server on port 10025. Yamcs knows how to submit commands to the simulator because of the link <code>udp-out</code>. If we navigate back to the <strong>Links</strong> page, we see its out counter has increased by one.
+    </p>
+
+    <p>
+        This concludes the overview of Yamcs basics: sending commands, and receiving telemetry.
+    </p>
+
+
+    <h2>Configuring Yamcs</h2>
+
+    <p>
+        Yamcs is configured through a set of Yaml configuration files. Yaml is a popular format, which despite the name similarity, is otherwise unrelated to Yamcs.
+    </p>
+    <p>
+        The main entrypoint is the file <code>src/main/yamcs/etc/yamcs.yaml</code>
+    </p>
+
+<div class="highlight"><pre><span></span><span class="nn">...</span><span class="w"></span>
+<span class="nt">dataDir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">yamcs-data</span><span class="w"></span>
+<span class="nt">instances</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">myproject</span><span class="w"></span>
+<span class="nn">...</span><span class="w"></span>
+</pre></div>
+
+
+    <p>
+        The <code>dataDir</code> property specifies the folder where Yamcs will persist data such as received telemetry. In this example we use a relative directory which resolves to <code>target/yamcs/yamcs-data</code>. This means that when we do <code>mvn clean</code>, all of our data will be removed. That may be acceptable for development purposes, but if you want to preserve received data, it's better to use an absolute path somewhere on your file system.
+    </p>
+    <p>
+        The <code>instances</code> property contains a list of predefined instances that are started by Yamcs. In this example we only require one instance.
+    </p>
+
+    <p>
+        For each instance there must be a matching file <code>yamcs.[instance].yaml</code> that contains instance-level configuration instructions. In our example project we have a file <code>yamcs.myproject.yaml</code>
+    </p>
+
+<div class="highlight"><pre><span></span><span class="nt">services</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">class</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">org.yamcs.archive.XtceTmRecorder</span><span class="w"></span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">class</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">org.yamcs.archive.ParameterRecorder</span><span class="w"></span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">...</span><span class="w"></span>
+
+<span class="nt">dataLinks</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">udp-in</span><span class="w"></span>
+<span class="w">    </span><span class="nt">class</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">org.yamcs.tctm.UdpTmDataLink</span><span class="w"></span>
+<span class="w">    </span><span class="nt">stream</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tm_realtime</span><span class="w"></span>
+<span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10015</span><span class="w"></span>
+<span class="w">    </span><span class="nt">packetPreprocessorClassName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">com.example.myproject.MyPacketPreprocessor</span><span class="w"></span>
+
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">udp-out</span><span class="w"></span>
+<span class="w">    </span><span class="nt">class</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">org.yamcs.tctm.UdpTcDataLink</span><span class="w"></span>
+<span class="w">    </span><span class="nt">stream</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tc_realtime</span><span class="w"></span>
+<span class="w">    </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">localhost</span><span class="w"></span>
+<span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10025</span><span class="w"></span>
+<span class="w">    </span><span class="nt">commandPostprocessorClassName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">com.example.myproject.MyCommandPostprocessor</span><span class="w"></span>
+
+<span class="nt">mdb</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">xtce</span><span class="w"></span>
+<span class="w">    </span><span class="nt">args</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">file</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mdb/xtce.xml</span><span class="w"></span>
+
+<span class="nn">...</span><span class="w"></span>
+</pre></div>
+
+
+    <p>
+        The <code>services</code> property contains a list of services that activate optional functionalities on this instance. In the example, there are services for recording. If they would not have been specified, Yamcs would only serve realtime data and not archive telemetry.
+    </p>
+    <p>
+        The <code>dataLinks</code> property contains a list of available data links. Here we use two UDP-based link types that are included in <code>yamcs-core</code>.
+    </p>
+    <ul>
+        <li>
+            The link <code>org.yamcs.tctm.UdpTmDataLink</code> listens to TM on the configured port. A packet preprocessor is configured. This component establishes metadata for each packet binary (packet time, sequence count), and is able to drop packets before they go any further (for example, because a checksum failed).
+        </li>
+        <li>
+            The link <code>org.yamcs.tctm.UdpTcDataLink</code> sends TC to the configured address. A command postprocessor is configured. This component intercepts commands before the link will send them out. The typical use case is to modify command binary with a sequence count, or to insert the correct packet length.
+        </li>
+    </ul>
+    <p>
+        The <code>mdb</code> property describes how the Mission Database is constructed. The word <em>database</em> is a bit of a misnomer, since Yamcs will build an in-memory instance-level MDB on startup based on the configured components. In this example Yamcs will read all definitions from an XML file in XTCE format. XTCE is a CCSDS Recommended Standard that defines an XSD Schema for validating telemetry and commanding definitions written in XML.
+    </p>
+    <p>
+        Yamcs supports a few other MDB types as well, and it is even possible to write your own MDB Loader. This is however an advanced topic requiring familiarity with Java. The same goes for many other features of Yamcs. For example, it is possible to extend the default services or data links with your own implementations. The <code>class</code> attribute in the Yaml configuration files indicates a Java-level class, which must be available on the classpath.
+    </p>
+
+
+    <h2>Packaging Yamcs</h2>
+    <p>
+        Running through Maven is useful for development and for creating prototypes, but it is not recommended for production environments. Instead bundle Yamcs together with your extensions and configurations in one integrated distribution:
+    </p>
+
+<div class="highlight"><pre><span></span>mvn clean package
+</pre></div>
+
+
+    This uses the <code>bundle</code> goal of the <code>yamcs-maven-plugin</code> as configured in <code>pom.xml</code>
+
+<div class="highlight"><pre><span></span><span class="nt">&lt;project&gt;</span>
+  ...
+  <span class="nt">&lt;build&gt;</span>
+    <span class="nt">&lt;plugins&gt;</span>
+      <span class="nt">&lt;plugin&gt;</span>
+        <span class="nt">&lt;groupId&gt;</span>org.yamcs<span class="nt">&lt;/groupId&gt;</span>
+        <span class="nt">&lt;artifactId&gt;</span>yamcs-maven-plugin<span class="nt">&lt;/artifactId&gt;</span>
+        <span class="nt">&lt;version&gt;</span>1.2.7<span class="nt">&lt;/version&gt;</span>
+        <span class="nt">&lt;executions&gt;</span>
+          <span class="nt">&lt;execution&gt;</span>
+            <span class="nt">&lt;id&gt;</span>bundle-yamcs<span class="nt">&lt;/id&gt;</span>
+            <span class="nt">&lt;phase&gt;</span>package<span class="nt">&lt;/phase&gt;</span>
+            <span class="nt">&lt;goals&gt;</span>
+              <span class="nt">&lt;goal&gt;</span>bundle<span class="nt">&lt;/goal&gt;</span>
+            <span class="nt">&lt;/goals&gt;</span>
+          <span class="nt">&lt;/execution&gt;</span>
+        <span class="nt">&lt;/executions&gt;</span>
+      <span class="nt">&lt;/plugin&gt;</span>
+    <span class="nt">&lt;/plugins&gt;</span>
+  <span class="nt">&lt;/build&gt;</span>
+<span class="nt">&lt;/project&gt;</span>
+</pre></div>
+
+
+
+    <h2>Next Steps</h2>
+    The typical next steps would be to:
+    <ul>
+        <li>Replace the <code>simulator.py</code> script with your own data source</li>
+        <li>Configure the appropriate data link(s) for your data source</li>
+        <li>Configure the Mission Database so that it matches your packet structure</li>
+    </ul>
+
+    
+    <p>
+        For an example of advanced customizations, refer to our <a href="https://github.com/yamcs/yamcs">development testcase</a> on GitHub.
+    </p>
+    <p>
+        For scripted access, have a look at the <a href="https://docs.yamcs.org/python-yamcs-client/">Python API</a>.
+    </p>
+</div>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="clear: both"></div>
+    <footer class="footer">
+        <div class="footer-right">
+            Copyright © 2022
+            <a href="https://www.spaceapplications.com/">Space Applications Services</a>
+            <p>&nbsp;</p>
+        </div>
+    </footer>
+
+
+
+</body></html>

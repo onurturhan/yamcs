@@ -1,0 +1,275 @@
+syntax="proto2";
+  
+package yamcs.protobuf.filetransfer;
+
+option java_package = "org.yamcs.protobuf";
+option java_outer_classname = "FileTransferProto";
+option java_multiple_files = true;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+import "yamcs/api/annotations.proto";
+
+// This API deals with transmission (upload and download) of file to and from spacecraft.
+// The API can be used to interface any implementation of the FileTransferService.
+// One such implementation is for the CFDP - CCSDS File Delivery Protocol.
+ 
+service FileTransferApi {
+
+  // List file transfer services
+  rpc ListFileTransferServices(ListFileTransferServicesRequest) returns (ListFileTransferServicesResponse) {
+    option (yamcs.api.route) = {
+      get: "/api/filetransfer/{instance}/services"
+    };
+  }
+
+  // List transfers
+  rpc ListTransfers(ListTransfersRequest) returns (ListTransfersResponse) {
+    option (yamcs.api.route) = {
+      get: "/api/filetransfer/{instance}/{serviceName}/transfers"
+    };
+  }
+  
+  // Get a transfer
+  rpc GetTransfer(GetTransferRequest) returns (TransferInfo) {
+    option (yamcs.api.route) = {
+      get: "/api/filetransfer/{instance}/{serviceName}/transfers/{id}"
+    };
+  }
+  
+  // Create a transfer
+  rpc CreateTransfer(CreateTransferRequest) returns (TransferInfo) {
+    option (yamcs.api.route) = {
+      post: "/api/filetransfer/{instance}/{serviceName}/transfers"
+      body: "*"
+    };
+  }
+  
+  // Pause a transfer
+  rpc PauseTransfer(PauseTransferRequest) returns (google.protobuf.Empty) {
+    option (yamcs.api.route) = {
+      post: "/api/filetransfer/{instance}/{serviceName}/transfers/{id}:pause"
+    };
+  }
+
+  // Cancel a transfer
+  //
+  // The ongoing transfer is aborted, partially uploaded/downloaded files
+  // are retained.
+  rpc CancelTransfer(CancelTransferRequest) returns (google.protobuf.Empty) {
+    option (yamcs.api.route) = {
+      post: "/api/filetransfer/{instance}/{serviceName}/transfers/{id}:cancel"
+    };
+  }
+  
+  // Resume a transfer
+  rpc ResumeTransfer(ResumeTransferRequest) returns (google.protobuf.Empty) {
+    option (yamcs.api.route) = {
+      post: "/api/filetransfer/{instance}/{serviceName}/transfers/{id}:resume"
+    };
+  }
+  
+  // Receive transfer updates
+  rpc SubscribeTransfers(SubscribeTransfersRequest) returns (stream TransferInfo) {
+    option (yamcs.api.websocket) = {
+      topic: "file-transfers"
+    };
+  }
+}
+
+enum TransferDirection {
+  UPLOAD = 1;
+  DOWNLOAD = 2;
+}
+
+enum TransferState {
+  RUNNING = 1;
+  PAUSED = 2;
+  FAILED = 3;
+  COMPLETED = 4;
+  QUEUED = 5;
+  CANCELLING = 6;
+}
+
+message TransactionId {
+    optional uint32 sequenceNumber = 1;
+    optional uint64 initiatorEntity = 2;
+}
+
+message ListFileTransferServicesRequest {
+  optional string instance = 1;
+}
+
+message ListFileTransferServicesResponse {
+  repeated FileTransferServiceInfo services = 1;
+}
+
+//This message is used to configure the yacms-web
+message FileTransferCapabilities {
+    //if true, yamcs-web shows a button for initiating an upload
+	optional bool upload = 1;
+	 
+	 //if true, yamcs-web shows a button for initiating a download
+	optional bool download = 2;
+	
+	//if true, yamcs-web will allow to chose reliable/non-reliable transfer 
+	optional bool reliability = 3;
+	
+    //if true, yamcs-web will show the section with the destination file/folder name (upload only)
+	optional bool remotePath = 4 ;
+}
+
+
+message FileTransferServiceInfo {
+  optional string instance = 1;
+  optional string name = 2;
+ 
+  repeated EntityInfo localEntities = 3;
+  repeated EntityInfo remoteEntities = 4;
+  optional FileTransferCapabilities capabilities = 5; 
+}
+
+message EntityInfo {
+  optional string name = 1;
+  optional uint64 id = 2;
+}
+
+//message sent as reponse to the info and also when starting a new transfer
+message TransferInfo {
+  //unique identifier assigned by the file transfer service
+  optional uint64 id = 1;
+  
+  //when the transfer has started. Note that this will not be set for QUEUED transfers.
+  optional google.protobuf.Timestamp startTime = 2;
+  optional TransferState state = 3;
+
+  optional string bucket = 4;
+  optional string objectName = 5;
+
+  optional string remotePath = 6;
+  optional TransferDirection direction = 7;
+
+  optional uint64 totalSize = 8;
+  optional uint64 sizeTransferred = 9;
+  
+  //reliable = true -> class 2 transfer
+  //reliable = false -> class 1 transfer
+  optional bool reliable = 10;
+  
+  //in case the transcation is failed, this provides more information
+  optional string failureReason = 11;
+
+  // valid for CFDP: transaction id;
+  // for the incoming transfers it is assigned by the remote peer so therefore might not be unique
+  optional TransactionId transactionId = 12;
+  
+  // when the transfer has been created. 
+  optional google.protobuf.Timestamp creationTime = 13;
+}
+
+message CreateTransferRequest {
+  message UploadOptions {
+    // Set to ``True`` if an already existing destination should be overwritten.
+    // Default: ``True``.
+    optional bool overwrite = 1;
+    
+    // Set to ``True`` if the destination path should be created if it does not exist.
+    // Default: ``True``.
+    optional bool createPath = 2;
+    
+    // Set to ``True`` if reliable (class 2) CFDP transfer should be used,
+    // otherwise unreliable (class 1). Default: ``False``.
+    optional bool reliable = 3;
+    
+    // Introduced in Issue 5 of the CFDP standard for non reliable (class 1) transfers
+    // Requests the receiver to send a Finished PDU at the end of the transfer
+    optional bool closureRequested = 4;
+  }
+  message DownloadOptions {
+  }
+
+  optional string instance = 1;
+  //service name
+  optional string serviceName = 8;
+
+  // **Required** One of ``UPLOAD`` or ``DOWNLOAD``.
+  optional TransferDirection direction = 2;
+
+  // **Required** The bucket containing the local Yamcs object.
+  optional string bucket = 3;
+  
+  // **Required** The object name in Yamcs bucket storage. For UPLOAD transfers,
+  // this object must exist and is what Yamcs will transfer to the remote
+  // entity. For DOWNLOAD transfers, it refers to the object that
+  // Yamcs will write to when downloading from a remote entity.
+  optional string objectName = 4;
+  
+  // **Required** The path at the remote entity. Example: ``a/local/path/some_filename``.
+  optional string remotePath = 5;
+  
+  optional DownloadOptions downloadOptions = 6;
+  
+  // Configuration options specific to ``UPLOAD`` transfers.
+  optional UploadOptions uploadOptions = 7;
+
+  //used to derive the source entity id
+  optional string source = 9;
+
+  //used to derive the destination entity id
+  optional string destination = 10;
+}
+
+message PauseTransferRequest {
+  // Yamcs instance name.
+  optional string instance = 1;
+  //service name
+  optional string serviceName = 3;
+  // Transfer identifier (assigned by Yamcs)
+  optional int64 id = 2;
+}
+
+message CancelTransferRequest {
+  // Yamcs instance name.
+  optional string instance = 1;
+  // service name
+  optional string serviceName = 3;
+  // Transfer identifier (assigned by Yamcs)
+  optional int64 id = 2;
+}
+
+message ResumeTransferRequest {
+  // Yamcs instance name.
+  optional string instance = 1;
+  // service name
+  optional string serviceName = 3;
+  // Transfer identifier (assigned by Yamcs)
+  optional int64 id = 2;
+}
+
+message ListTransfersRequest {
+  // Yamcs instance name.
+  optional string instance = 1;
+  // service name
+  optional string serviceName = 2;
+}
+
+message GetTransferRequest {
+  // Yamcs instance name.
+  optional string instance = 1;
+  // service name
+  optional string serviceName = 3;
+  // Transfer identifier (assigned by Yamcs)
+  optional int64 id = 2;
+}
+
+message ListTransfersResponse {
+  repeated TransferInfo transfers = 1;
+}
+
+message SubscribeTransfersRequest {
+  // Yamcs instance name.
+  optional string instance = 1;
+  // service name
+  optional string serviceName = 2;
+}

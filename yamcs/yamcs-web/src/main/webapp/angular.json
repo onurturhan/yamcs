@@ -1,0 +1,88 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "newProjectRoot": "projects",
+  "projects": {
+    "app": {
+      "root": "",
+      "sourceRoot": "src",
+      "projectType": "application",
+      "schematics": {},
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:browser",
+          "options": {
+            "aot": true,
+            "outputPath": "dist",
+            "index": "src/index.html",
+            "main": "src/main.ts",
+            "tsConfig": "tsconfig.app.json",
+            "polyfills": "src/polyfills.ts",
+            "preserveSymlinks": true,
+            "outputHashing": "bundles",
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "src/assets/",
+                "output": "/"
+              },
+              {
+                "glob": "**/*",
+                "input": "node_modules/@yamcs/opi/dist/images/",
+                "output": "/"
+              }
+            ],
+            "styles": [
+              "src/styles/vars.css",
+              "src/styles/material-theme.scss",
+              "src/styles/material-icons.css",
+              "src/styles/scrollbar.css",
+              "src/styles/styles.css",
+              "src/styles/data-table.css",
+              "src/styles/dl-horizontal.css",
+              "src/styles/form.css",
+              "node_modules/@yamcs/opi/dist/fonts/stylesheet.css",
+              "node_modules/roboto-fontface/css/roboto/roboto-fontface.css"
+            ],
+            "allowedCommonJsDependencies": [
+              "brace/mode/javascript",
+              "showdown"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "6kb"
+                }
+              ],
+              "optimization": true,
+              "sourceMap": false,
+              "namedChunks": false,
+              "aot": true,
+              "extractLicenses": true,
+              "vendorChunk": false,
+              "buildOptimizer": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prod.ts"
+                }
+              ]
+            },
+            "development": {
+              "optimization": false,
+              "sourceMap": true,
+              "aot": false,
+              "buildOptimizer": false
+            }
+          },
+          "defaultConfiguration": "production"
+        }
+      }
+    }
+  },
+  "defaultProject": "app"
+}

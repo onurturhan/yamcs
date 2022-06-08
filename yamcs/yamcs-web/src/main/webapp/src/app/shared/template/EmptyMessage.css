@@ -1,0 +1,22 @@
+.frame {
+  display: inline-block;
+  width: 412px;
+  border-radius: 10px;
+  box-shadow: 0px 10px 16px -8px rgba(0, 0, 0, 0.2);
+  background-color: #fff;
+}
+
+.frame .header {
+  border-bottom: 1px solid #d3d3d3;
+  height: 64px;
+  line-height: 64px;
+  padding-left: 24px;
+  position: relative;
+  text-align: left;
+  font-size: large;
+}
+
+.frame .body {
+  padding: 24px;
+  text-align: left;
+}

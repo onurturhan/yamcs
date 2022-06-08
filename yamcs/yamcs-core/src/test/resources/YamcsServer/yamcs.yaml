@@ -1,0 +1,8 @@
+instances:
+ - instance0
+ - instance1
+
+incomingDir: /tmp/yamcs-incoming
+dataDir: /tmp/yamcs-data
+
+secretKey: testtest

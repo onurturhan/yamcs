@@ -1,0 +1,552 @@
+syntax="proto2";
+
+package yamcs.protobuf.yamcsManagement;
+
+option java_package = "org.yamcs.protobuf";
+option java_outer_classname = "YamcsManagementProto";
+option java_multiple_files = true;
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+import "yamcs/api/annotations.proto";
+import "yamcs/protobuf/yamcs.proto";
+import "yamcs/protobuf/mdb/mdb.proto";
+
+service ManagementApi {
+
+  // Get system info
+  rpc GetSystemInfo(google.protobuf.Empty) returns (SystemInfo) {
+    option (yamcs.api.route) = {
+      get: "/api/sysinfo"
+    };
+  }
+
+  // Receive system info updates
+  rpc SubscribeSystemInfo(google.protobuf.Empty) returns (stream SystemInfo) {
+    option (yamcs.api.websocket) = {
+      topic: "sysinfo"
+    };
+  }
+
+  // List instance templates
+  rpc ListInstanceTemplates(google.protobuf.Empty) returns (ListInstanceTemplatesResponse) {
+    option (yamcs.api.route) = {
+      get: "/api/instance-templates"
+    };
+  }
+
+  // Get an instance template
+  rpc GetInstanceTemplate(GetInstanceTemplateRequest) returns (InstanceTemplate) {
+    option (yamcs.api.route) = {
+      get: "/api/instance-templates/{template}"
+    };
+  }
+  
+  // List instances
+  rpc ListInstances(ListInstancesRequest) returns (ListInstancesResponse) {
+    option (yamcs.api.route) = {
+      get: "/api/instances"
+    };
+  }
+  
+  // Receive instance updates
+  rpc SubscribeInstances(google.protobuf.Empty) returns (stream YamcsInstance) {
+    option (yamcs.api.websocket) = {
+      topic: "instances"
+    };
+  }
+  
+  // Get an instance
+  // 
+  // If an instance does not have web services enabled, it will be listed among the
+  // results, but none of its URLs will be filled in.
+  rpc GetInstance(GetInstanceRequest) returns (YamcsInstance) {
+    option (yamcs.api.route) = {
+      get: "/api/instances/{instance}"
+    };
+  }
+  
+  // Create an instance
+  rpc CreateInstance(CreateInstanceRequest) returns (YamcsInstance) {
+    option (yamcs.api.route) = {
+      post: "/api/instances"
+      body: "*"
+    };
+  }
+
+  // Reconfigure a templated instance
+  //
+  // Regenerates the instance configuration based on the latest
+  // template source, and with optionally modified template variables.
+  rpc ReconfigureInstance(ReconfigureInstanceRequest) returns (YamcsInstance) {
+    option (yamcs.api.route) = {
+      post: "/api/instances/{instance}:reconfigure"
+      body: "*"
+    };
+  }
+  
+  // Start an instance
+  //
+  // If the instance is in the RUNNING state, this call will do nothing.
+  // Otherwise the instance will be started.
+  rpc StartInstance(StartInstanceRequest) returns (YamcsInstance) {
+    option (yamcs.api.route) = {
+      post: "/api/instances/{instance}:start"
+    };
+  }
+  
+  // Stop an instance
+  // 
+  // Stop all services of the instance. The instance state will be OFFLINE.
+  // If the instance state is already OFFLINE, this call will do nothing.
+  rpc StopInstance(StopInstanceRequest) returns (YamcsInstance) {
+    option (yamcs.api.route) = {
+      post: "/api/instances/{instance}:stop"
+    };
+  }
+  
+  // Restart an instance
+  //
+  // If the instance state is RUNNING, the instance will be stopped and then
+  // restarted. Otherwise the instance will be started. Note that the Mission
+  // Database will also be reloaded before restart.
+  rpc RestartInstance(RestartInstanceRequest) returns (YamcsInstance) {
+    option (yamcs.api.route) = {
+      post: "/api/instances/{instance}:restart"
+    };
+  }
+  
+  // List services
+  rpc ListServices(ListServicesRequest) returns (ListServicesResponse) {
+    option (yamcs.api.route) = {
+      get: "/api/services/{instance}"
+    };
+  }
+  
+  // Get a service
+  rpc GetService(GetServiceRequest) returns (ServiceInfo) {
+    option (yamcs.api.route) = {
+      get: "/api/services/{instance}/{name}"
+    };
+  }
+  
+  // Start a service
+  rpc StartService(StartServiceRequest) returns (google.protobuf.Empty) {
+    option (yamcs.api.route) = {
+      post: "/api/services/{instance}/{name}:start"
+    };
+  }
+  
+  // Stop a service
+  //
+  // Once stopped, a service cannot be resumed. Instead a new service
+  // instance will be created and started.
+  rpc StopService(StopServiceRequest) returns (google.protobuf.Empty) {
+    option (yamcs.api.route) = {
+      post: "/api/services/{instance}/{name}:stop"
+    };
+  }
+}
+
+/*service states coming from guava (numbers have to correspond)*/
+enum ServiceState {
+  NEW = 0;
+  STARTING = 1;
+  RUNNING = 2;
+  STOPPING = 3;
+  TERMINATED = 4;
+  FAILED = 5;
+}
+
+message YamcsInstances {
+  repeated YamcsInstance instances = 1;
+}
+
+message YamcsInstance {
+  enum InstanceState {
+    OFFLINE = 0;
+    INITIALIZING = 1;
+    INITIALIZED = 2;
+    STARTING = 3;
+    RUNNING = 4;
+    STOPPING = 5;
+    FAILED = 6;
+  }
+  // Instance name.
+  optional string name = 1;
+  optional mdb.MissionDatabase missionDatabase = 3;
+  repeated ProcessorInfo processors = 4;
+  optional InstanceState state = 11;
+
+  //in case the state=FAILED, this field will indicate the cause of the failure
+  // the missionDatabase and other fields may not be filled when this happens
+  optional string failureCause = 9;
+
+  optional google.protobuf.Timestamp missionTime = 10;
+
+  // Labels assigned to this instance. Each entry is keyed by the tag name
+  // of the label. The value represent the label value for that tag.
+  map<string, string> labels = 12;
+
+  // Feature capability hints for client use
+  repeated string capabilities = 13;
+  
+  // Name of the template, if this instance was generated  
+  optional string template = 14;
+  
+  // Arguments used during template processing, if this instance
+  // was generated
+  map<string, string> templateArgs = 15;
+  
+  // Whether the template is stil available
+  optional bool templateAvailable = 16;
+  
+  // Whether the template has changed since this instance was
+  // generated
+  optional bool templateChanged = 17;
+}
+
+message InstanceTemplate {
+  // Template name.
+  optional string name = 1;
+
+  // Human-friendly description
+  optional string description = 3;
+
+  // List of variables that this template may expect  
+  repeated TemplateVariable variables = 2;
+}
+
+message TemplateVariable {
+  // Variable name. 
+  optional string name = 1;
+  
+  // Verbose name for use in UI forms
+  optional string label = 6;
+  
+  // Type of variable (Java class extending org.yamcs.templating.Variable)
+  optional string type = 4;
+  
+  // Verbose user guidance (HTML)
+  optional string help = 2;
+  
+  // Whether this variable is required input
+  optional bool required = 3;
+  
+  // List of valid choices
+  repeated string choices = 5;
+  
+  // Initial value for use in UI forms
+  optional string initial = 7;
+}
+
+message ProcessorInfo {
+  // Yamcs instance name.
+  optional string instance = 1;
+  
+  // Processor name.
+  optional string name = 2;
+  optional string type = 3;
+  optional string spec = 4;
+  optional string creator = 5;
+  optional bool hasAlarms = 6;
+  optional bool hasCommanding = 7;
+  optional ServiceState state = 8;
+  optional ReplayRequest replayRequest = 9; //in case of replay
+  optional ReplayStatus.ReplayState replayState = 10; //in case of replay
+  repeated ServiceInfo services = 16;
+  optional bool persistent = 17;
+  optional google.protobuf.Timestamp time = 18;
+  optional bool replay = 19;
+  optional bool checkCommandClearance = 20;
+}
+
+message TmStatistics {
+  reserved 3,4,7, 8;
+  
+  // Packet name.
+  optional string packetName = 1;
+
+  optional string qualifiedName = 9;
+  optional int64 receivedPackets = 2;
+  optional int32 subscribedParameterCount = 6;
+  optional google.protobuf.Timestamp lastReceived = 10;
+  optional google.protobuf.Timestamp lastPacketTime = 11;
+  optional int64 packetRate = 12;
+  optional int64 dataRate = 13;
+}
+
+message Statistics {
+  reserved 2,4,5;
+  // Yamcs instance name.
+  optional string instance = 1;
+  
+  // Processor name.
+  optional string processor = 7;
+
+  repeated TmStatistics tmstats = 3;
+  optional google.protobuf.Timestamp lastUpdated = 6; //java local time of the last update
+}
+
+message ProcessorManagementRequest {
+  enum Operation {
+    CREATE_PROCESSOR = 0;
+    CONNECT_TO_PROCESSOR = 1;
+  }
+  optional Operation operation = 1;
+  optional string instance = 2; //yamcs instance
+  optional string name = 3; //processor name
+  optional string type = 4; //only for CREATE
+  optional string config = 5; //only for CREATE - used to be called spec
+  optional bool persistent = 7[default=false]; //only for CREATE
+}
+
+message ProcessorRequest {
+  enum Operation {
+    PAUSE = 2;
+    RESUME = 3;
+    SEEK = 4;
+    CHANGE_SPEED = 5;
+  }
+  optional Operation operation = 1;
+  optional string instance = 2; //yamcs instance
+  optional string name = 3; //processor name
+  optional int64 seekTime = 4; //for SEEK
+  optional ReplaySpeed replaySpeed = 5; //for CHANGE_SPEED
+}
+
+message ServiceInfo {
+  optional string instance = 1;
+  optional string name = 2;
+  optional ServiceState state = 3;
+  optional string className = 4;
+  optional string processor = 5;
+}
+
+message StreamEvent {
+  enum Type {
+    CREATED = 1;
+    DELETED = 2;
+    UPDATED = 3;
+  }
+  optional Type type = 1;
+  optional string name = 2;
+  optional int64 dataCount = 3;
+}
+
+message SystemInfo {
+  // Yamcs version number.
+  optional string yamcsVersion = 1;
+  
+  // Git revision number at build time.
+  optional string revision = 2;
+  
+  // Server identifier, as used in system parameters and distributed setups.
+  optional string serverId = 3;
+
+  // Uptime of Yamcs in milliseconds 
+  optional int64 uptime = 5;
+  
+  // Java virtual machine implementation name, version and vendor
+  optional string jvm = 6;
+  
+  // Working directory of Yamcs (base path for relative references)
+  optional string workingDirectory = 7;
+  
+  // Directory where configuration files are located.
+  optional string configDirectory = 8;
+  
+  // Directory where Yamcs data is stored.
+  optional string dataDirectory = 9;
+  
+  // Directory where Yamcs may cache files.
+  optional string cacheDirectory = 10;
+
+  // Operating system name and version.
+  optional string os = 11;
+
+  // Operating system architecture.
+  optional string arch = 12;
+
+  // Number of processors available to Yamcs.
+  optional int32 availableProcessors = 13;
+
+  // System load average for the last minute.
+  optional double loadAverage = 14;
+
+  // Amount of memory in bytes of the heap that is used for object allocation and that is committed for the JVM to use.
+  optional int64 heapMemory = 15;
+
+  // Amount of used heap memory in bytes.
+  optional int64 usedHeapMemory = 16;
+
+  // Maximum amount of heap memory in bytes that can be used for memory management.
+  optional int64 maxHeapMemory = 17;
+
+  // Amount of non-heap memory in bytes that is committed for the JVM to use.
+  optional int64 nonHeapMemory = 18;
+
+  // Amount of non-heap used memory in bytes.
+  optional int64 usedNonHeapMemory = 19;
+
+  // Maximum amount of non-heap memory in bytes that can be used for memory management.
+  optional int64 maxNonHeapMemory = 20;
+  
+  // Number of active threads.
+  optional int64 jvmThreadCount = 21;
+  
+  // Root directories, each corresponding to a distinct file hierarchy.
+  repeated RootDirectory rootDirectories = 22;
+  
+  // Information about the Yamcs process and any descendants.
+  optional ProcessInfo process = 23;
+}
+
+message ProcessInfo {
+  // Native process ID.
+  optional int64 pid = 1;
+
+  // User of the process.
+  optional string user = 2;
+
+  // Executable pathname of the process.
+  optional string command = 3;
+
+  // Arguments of the process.
+  repeated string arguments = 4;
+
+  // Start time of the process.
+  optional google.protobuf.Timestamp startTime = 5;
+
+  // Accumulated total cputime.
+  optional google.protobuf.Duration totalCpuDuration = 6;
+
+  // Direct children of the process.
+  repeated ProcessInfo children = 7;
+}
+
+message RootDirectory {
+  // Root directory location.
+  optional string directory = 1;
+
+  // The type of the file store where this root directory is located.
+  optional string type = 2;
+
+  // Size in bytes of the file store where this root directory is located.
+  optional int64 totalSpace = 3;
+
+  // Number of unallocated bytes in the file store where this root directory
+  // is located.
+  optional int64 unallocatedSpace = 4;
+
+  // Number of bytes available to Yamcs on the file store where this root
+  // directory is located.
+  optional int64 usableSpace = 5;
+}
+
+message ListServicesRequest {
+  // Yamcs instance name. Or _global for system-wide services. 
+  optional string instance = 1;
+}
+
+message GetServiceRequest {
+  // Yamcs instance name. Or _global for system-wide services.
+  optional string instance = 1;
+
+  // Service name
+  optional string name = 2;
+}
+
+message StartServiceRequest {
+  // Yamcs instance name. Or _global for system-wide services.
+  optional string instance = 1;
+
+  // Service name
+  optional string name = 2;
+}
+
+message StopServiceRequest {
+  // Yamcs instance name. Or _global for system-wide services.
+  optional string instance = 1;
+
+  // Service name
+  optional string name = 2;
+}
+
+message ListServicesResponse {
+  repeated ServiceInfo services = 1;
+}
+
+message ListInstancesRequest {
+  repeated string filter = 1;
+}
+
+message ListInstancesResponse {
+  repeated YamcsInstance instances = 1;
+}
+
+message CreateInstanceRequest {
+  // **Required.** The name of the instance.
+  optional string name = 1;
+  
+  // **Required.** The name of the template for this instance.
+  optional string template = 2;
+  
+  // Arguments for substitution in the template definition. Each entry is
+  // keyed by the argument name. The value must be a string.
+  map<string, string> templateArgs = 3;
+  
+  // Labels assigned to this instance. Each entry is keyed by the tag name
+  // of the label. The value represent the label value for that tag.
+  map<string, string> labels = 4;
+}
+
+message ReconfigureInstanceRequest {
+  // Yamcs instance name.
+  optional string instance = 1;
+
+  // Arguments for substitution in the template definition. Each entry is
+  // keyed by the argument name. The value must be a string.
+  map<string, string> templateArgs = 2;
+  
+  // Labels assigned to this instance. Each entry is keyed by the tag name
+  // of the label. The value represent the label value for that tag.
+  map<string, string> labels = 3;
+}
+
+message ListInstanceTemplatesResponse {
+  repeated InstanceTemplate templates = 1; 
+}
+
+message EditInstanceRequest {
+  // Yamcs instance name.
+  optional string instance = 1;
+  optional string state = 2;
+}
+
+message GetInstanceTemplateRequest {
+  // Template name.
+  optional string template = 1;
+}
+
+message GetInstanceRequest {
+  // Yamcs instance name.
+  optional string instance = 1;
+}
+
+message StartInstanceRequest {
+  // Yamcs instance name.
+  optional string instance = 1;
+}
+
+message StopInstanceRequest {
+  // Yamcs instance name.
+  optional string instance = 1;
+}
+
+message RestartInstanceRequest {
+  // Yamcs instance name.
+  optional string instance = 1;
+}

@@ -1,0 +1,13 @@
+.tab-content-wrapper {
+  position: absolute;
+  /* tab height + border */
+  top: 37px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: auto;
+}
+
+.tab-content-wrapper.noscroll {
+  overflow: hidden;
+}

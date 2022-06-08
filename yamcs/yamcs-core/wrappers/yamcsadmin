@@ -1,0 +1,30 @@
+#!/bin/sh
+
+# resolve links - $0 may be a softlink
+PRG="$0"
+
+while [ -h "$PRG" ]; do
+  ls=`ls -ld "$PRG"`
+  link=`expr "$ls" : '.*-> \(.*\)$'`
+  if expr "$link" : '/.*' > /dev/null; then
+    PRG="$link"
+  else
+    PRG=`dirname "$PRG"`/"$link"
+  fi
+done
+
+# Get standard environment variables
+PRGDIR=`dirname "$PRG"`
+YAMCS_HOME=`cd "$PRGDIR/.." ; pwd`
+
+# cd into YAMCS_HOME to support relative links in configuration files
+cd "$YAMCS_HOME"
+
+if [ -d "$JAVA_HOME" ]; then
+  _RUNJAVA="$JAVA_HOME/bin/java"
+else
+  _RUNJAVA=java
+fi
+
+export CLASSPATH="$YAMCS_HOME/lib/*:$YAMCS_HOME/lib/ext/*"
+exec "$_RUNJAVA" -Djava.library.path=$YAMCS_HOME/lib:$YAMCS_HOME/lib/ext -Xmx512m org.yamcs.cli.YamcsAdminCli "$@"

@@ -1,0 +1,49 @@
+{
+  "type": "datasource",
+  "name": "Yamcs",
+  "id": "yamcs-yamcs-datasource",
+  "category": "other",
+  "metrics": true,
+  "info": {
+    "description": "Data source for Yamcs Mission Control",
+    "author": {
+      "name": "Yamcs Team",
+      "url": "https://yamcs.org"
+    },
+    "logos": {
+      "small": "img/logo.png",
+      "large": "img/logo.png"
+    },
+    "links": [
+      {
+        "name": "Website",
+        "url": "https://yamcs.org"
+      },
+      {
+        "name": "Issue Tracker",
+        "url": "https://github.com/yamcs/grafana-yamcs/issues"
+      },
+      {
+        "name": "License",
+        "url": "https://github.com/yamcs/grafana-yamcs/blob/master/LICENSE"
+      }
+    ],
+    "screenshots": [
+      {
+        "name": "Dashboard",
+        "path": "img/dashboard.png"
+      },
+      {
+        "name": "Explore",
+        "path": "img/explore.png"
+      }
+    ],
+    "version": "%VERSION%",
+    "updated": "%TODAY%"
+  },
+  "dependencies": {
+    "grafanaVersion": "8.0.0",
+    "grafanaDependency": ">=8.0.0",
+    "plugins": []
+  }
+}

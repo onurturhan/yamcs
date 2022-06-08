@@ -1,0 +1,448 @@
+syntax="proto2";
+  
+package yamcs.protobuf.processing;
+
+option java_package = "org.yamcs.protobuf";
+option java_outer_classname = "ProcessingProto";
+option java_multiple_files = true;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+import "yamcs/api/annotations.proto";
+import "yamcs/protobuf/pvalue/pvalue.proto";
+import "yamcs/protobuf/yamcsManagement/yamcsManagement.proto";
+import "yamcs/protobuf/yamcs.proto";
+
+service ProcessingApi {
+
+  // List processor types
+  rpc ListProcessorTypes(google.protobuf.Empty) returns (ListProcessorTypesResponse) {
+    option (yamcs.api.route) = {
+      get: "/api/processor-types"
+    };
+  }
+  
+  // List processors
+  rpc ListProcessors(ListProcessorsRequest) returns (ListProcessorsResponse) {
+    option (yamcs.api.route) = {
+      get: "/api/processors"
+    };
+  }
+  
+  // Get a processor
+  rpc GetProcessor(GetProcessorRequest) returns (yamcsManagement.ProcessorInfo) {
+    option (yamcs.api.route) = {
+      get: "/api/processors/{instance}/{processor}"
+    };
+  }
+  
+  // Delete a processor
+  //
+  // Only replay processors can be removed.
+  rpc DeleteProcessor(DeleteProcessorRequest) returns (google.protobuf.Empty) {
+    option (yamcs.api.route) = {
+      delete: "/api/processors/{instance}/{processor}"
+    };
+  }
+  
+  // Update a processor
+  rpc EditProcessor(EditProcessorRequest) returns (google.protobuf.Empty) {
+    option (yamcs.api.route) = {
+      patch: "/api/processors/{instance}/{processor}"
+      body: "*"
+    };
+  }
+  
+  // Create a processor
+  rpc CreateProcessor(CreateProcessorRequest) returns (google.protobuf.Empty) {
+    option (yamcs.api.route) = {
+      post: "/api/processors"
+      body: "*"
+    };
+  }
+
+  // Get a parameter's value
+  rpc GetParameterValue(GetParameterValueRequest) returns (pvalue.ParameterValue) {
+    option (yamcs.api.route) = {
+      get: "/api/processors/{instance}/{processor}/parameters/{name*}"
+    };
+  }
+  
+  // Set a parameter's value
+  //
+  // Only some type of parameters can be updated.
+  rpc SetParameterValue(SetParameterValueRequest) returns (google.protobuf.Empty) {
+    option (yamcs.api.route) = {
+      put: "/api/processors/{instance}/{processor}/parameters/{name*}"
+      body: "value"
+      additional_bindings {
+        post: "/api/processors/{instance}/{processor}/parameters/{name*}"
+        body: "value"
+      }
+    };
+  }
+  
+  // Batch get the value of multiple parameters
+  rpc BatchGetParameterValues(BatchGetParameterValuesRequest) returns (BatchGetParameterValuesResponse) {
+    option (yamcs.api.route) = {
+      post: "/api/processors/{instance}/{processor}/parameters:batchGet"
+      body: "*"
+    };
+  }
+  
+  // Batch set the value of multiple parameters
+  rpc BatchSetParameterValues(BatchSetParameterValuesRequest) returns (google.protobuf.Empty) {
+    option (yamcs.api.route) = {
+      post: "/api/processors/{instance}/{processor}/parameters:batchSet"
+      body: "*"
+    };
+  }
+  
+  // Receive TM statistics updates
+  rpc SubscribeTMStatistics(SubscribeTMStatisticsRequest) returns (stream yamcsManagement.Statistics) {
+    option (yamcs.api.websocket) = {
+      topic: "tmstats"
+    };
+  }
+  
+  // Receive parameter updates
+  //
+  // The input message can be sent multiple types, allowing to alter a
+  // subscription with the ``action`` field.
+  rpc SubscribeParameters(stream SubscribeParametersRequest) returns (stream SubscribeParametersData) {
+    option (yamcs.api.websocket) = {
+      topic: "parameters"
+    };
+  }
+  
+  // Receive processor updates
+  rpc SubscribeProcessors(SubscribeProcessorsRequest) returns (stream yamcsManagement.ProcessorInfo) {
+    option (yamcs.api.websocket) = {
+      topic: "processors"
+    };
+  }
+
+ // Get the algorithm status
+  rpc GetAlgorithmStatus(GetAlgorithmStatusRequest) returns (AlgorithmStatus) {
+    option (yamcs.api.route) = {
+      get: "/api/processors/{instance}/{processor}/algorithms/{name*}/status"
+    };
+  }
+  
+  // Receive algorithm status updates
+  rpc SubscribeAlgorithmStatus(SubscribeAlgorithmStatusRequest) returns (stream AlgorithmStatus) {
+    option (yamcs.api.websocket) = {
+      topic: "algorithm-status"
+    };
+  }
+  
+  // Get the algorithm trace
+  rpc GetAlgorithmTrace(GetAlgorithmTraceRequest) returns (AlgorithmTrace) {
+    option (yamcs.api.route) = {
+      get: "/api/processors/{instance}/{processor}/algorithms/{name*}/trace"
+    };
+  }
+
+  // Enable/disable algorithm tracing
+  rpc EditAlgorithmTrace(EditAlgorithmTraceRequest) returns (google.protobuf.Empty) {
+    option (yamcs.api.route) = {
+      patch: "/api/processors/{instance}/{processor}/algorithms/{name*}/trace"
+      body: "*"
+    };
+  }
+}
+
+message ListProcessorTypesResponse {
+  repeated string types = 1;
+}
+
+message ListProcessorsRequest {
+  // Return only processors of this instance
+  optional string instance = 1;
+}
+
+message ListProcessorsResponse {
+  repeated yamcsManagement.ProcessorInfo processors = 1;
+}
+
+message SubscribeTMStatisticsRequest {
+  optional string instance = 1;
+  optional string processor = 2;
+}
+
+message SubscribeProcessorsRequest {
+  // Yamcs instance name.
+  optional string instance = 1;
+
+  // Processor name.
+  optional string processor = 2;
+}
+
+message SubscribeParametersRequest {
+  enum Action {
+    REPLACE = 0;
+    ADD = 1;
+    REMOVE = 2;
+  }
+  
+  // Yamcs instance name.
+  optional string instance = 1;
+ 
+  // Processor name.
+  optional string processor = 2;
+
+  repeated NamedObjectId id = 3;
+  
+  // Send an error message if any parameter is invalid.
+  // Default: true
+  optional bool abortOnInvalid = 4;
+
+  // Send parameter updates when parameters expire.
+  // The update will have the same value and timestamp like
+  // the preceding update, but with acquisition status set to
+  // EXPIRED (instead of ACQUIRED)
+  // Default: false
+  optional bool updateOnExpiration = 5;
+
+  // If available, send immediately the last cached value
+  // of each subscribed parameter.
+  // Default: true
+  optional bool sendFromCache = 6;
+  
+  // How to interpret the submitted parameter ids. Default
+  // is to replace an exising subscription with the newly
+  // submitted list.
+  optional Action action = 7;
+}
+
+message SubscribeParametersData {
+  // mapping between numeric and subscribed id
+  map<uint32, NamedObjectId> mapping = 1;
+  
+  repeated NamedObjectId invalid = 2;
+  
+  repeated pvalue.ParameterValue values = 3;
+}
+
+message GetProcessorRequest {
+  // Yamcs instance name.
+  optional string instance = 1;
+  
+  // Processor name.
+  optional string processor = 2;
+}
+
+message DeleteProcessorRequest {
+  // Yamcs instance name.
+  optional string instance = 1;
+  
+  // Processor name.
+  optional string processor = 2;
+}
+
+message CreateProcessorRequest {
+  // **Required.** The name of the Yamcs instance.
+  optional string instance = 1;
+
+  // **Required.** The name of the processor. Must be unique for the Yamcs instance.
+  optional string name = 2;
+  
+  // Keep the processor when terminated. Default: ``no``.
+  optional bool persistent = 4;
+  
+  // **Required.** The type of the processor. The available values depend on how
+  // Yamcs Server is configured. Most Yamcs deployments support at least a type
+  // ``Archive`` which allows for the creation of processors replaying archived
+  // data.
+  optional string type = 5;
+  
+  // Configuration options specific to the processor type. Note that this should
+  // be a string representation of a valid JSON structure.
+  optional string config = 6;
+}
+
+message EditProcessorRequest {
+  // Yamcs instance name.
+  optional string instance = 1;
+  
+  // Processor name.
+  optional string processor = 2;
+  
+  // The state this replay processor should be updated to. Either ``paused`` or
+  // ``running``.
+  optional string state = 3;
+  
+  // The time where the processing needs to jump towards. Must be a date string
+  // in ISO 8601 format.
+  optional google.protobuf.Timestamp seek = 4;
+  
+  // The speed of the processor. One of:
+  // * ``afap``
+  // * a speed factor relative to the original speed. Example: ``2x``
+  // * a fixed delay value in milliseconds. Example: ``2000``
+  optional string speed = 5;
+}
+
+message GetParameterValueRequest {
+  // Yamcs instance name.
+  optional string instance = 1;
+  
+  // Processor name.
+  optional string processor = 2;
+  
+  // Parameter name. 
+  optional string name = 3;
+
+  // Whether the latest cached value may be returned. Default: ``yes``.
+  optional bool fromCache = 4;
+  
+  // Time in milliseconds to wait on a value (only considered if
+  // ``fromCache=no``). When the timeout is met, the call will return
+  // with no or partial data. Default: ``10000``.
+  optional uint64 timeout = 5;
+}
+
+message SetParameterValueRequest {
+  // Yamcs instance name.
+  optional string instance = 1;
+  
+  // Processor name.
+  optional string processor = 2;
+  
+  // Parameter name.
+  optional string name = 3;
+  
+  // The new value.
+  optional Value value = 4;
+
+  // The generation time of the value. If specified, must be a date
+  // string in ISO 8601 format.
+  optional google.protobuf.Timestamp generationTime = 5;
+}
+
+message BatchGetParameterValuesRequest {
+  // Yamcs instance name.
+  optional string instance = 4;
+  
+  // Processor name.
+  optional string processor = 5;
+  
+  repeated NamedObjectId id = 1;
+  optional bool fromCache = 2;
+  
+  // if not fromCache, wait this time (in milliseconds) to receive the parameter
+  optional uint64 timeout = 3;
+}
+
+message BatchGetParameterValuesResponse {
+  repeated pvalue.ParameterValue value = 1;
+}
+
+message BatchSetParameterValuesRequest {
+  message SetParameterValueRequest {
+    optional NamedObjectId id = 1;
+    optional Value value = 2;
+
+    // The generation time of the value. If specified, must be a date
+    // string in ISO 8601 format.
+    optional google.protobuf.Timestamp generationTime = 3;
+  }
+  
+  // Yamcs instance name.
+  optional string instance = 2;
+  
+  // Processor name.
+  optional string processor = 3;
+  repeated SetParameterValueRequest request = 1;
+}
+
+message GetAlgorithmStatusRequest {
+  // Yamcs instance name.
+  optional string instance = 1;
+  
+  // Processor name.
+  optional string processor = 2;
+  
+  // Algorithm name.
+  optional string name = 3;
+}
+
+message SubscribeAlgorithmStatusRequest {
+  // Yamcs instance name.
+  optional string instance = 1;
+  
+  // Processor name.
+  optional string processor = 2;
+  
+  // Algorithm name.
+  optional string name = 3;
+}
+
+message GetAlgorithmTraceRequest {
+  // Yamcs instance name.
+  optional string instance = 1;
+  
+  // Processor name.
+  optional string processor = 2;
+  
+  // Algorithm name.
+  optional string name = 3;
+}
+
+message EditAlgorithmTraceRequest {
+  // Yamcs instance name.
+  optional string instance = 1;
+  
+  // Processor name.
+  optional string processor = 2;
+  
+  // Algorithm name.
+  optional string name = 3;
+
+  // Trace state: either ``enabled`` or ``disabled``.
+  optional string state = 4;
+}
+
+message AlgorithmStatus {
+
+  //true if the algorithm is active
+  optional bool active = 1;
+  
+  //true if the tracing has been enabled 
+  optional bool traceEnabled = 2;
+    
+  // how many times the algorithm ran (successfully or with error)
+  optional uint32 runCount = 3;
+  
+  // when the algorithm was last run
+  optional google.protobuf.Timestamp lastRun = 4;
+  
+  // how many times the algorithm ran with errors
+  optional uint32 errorCount = 5;
+  
+  // if the algorithm produced an error, 
+  // the fields below contain the error message and the time when the error was raised 
+  optional string errorMessage = 6;
+  optional google.protobuf.Timestamp errorTime = 7;
+  
+  //total execution time in nanoseconds
+  optional uint64 execTimeNs = 8;
+}
+
+message AlgorithmTrace {
+  message Run {
+    optional google.protobuf.Timestamp time = 1;
+    repeated pvalue.ParameterValue inputs = 2;
+    repeated pvalue.ParameterValue outputs = 3;
+    optional string returnValue = 4;
+    optional string error = 5;
+  }
+  message Log {
+    optional google.protobuf.Timestamp time = 2;
+    optional string msg = 3;
+  }
+
+  repeated Run runs = 1;
+  repeated Log logs = 2;
+}

@@ -1,0 +1,17 @@
+services:     
+    - class: org.yamcs.archive.XtceTmRecorder
+    - class: org.yamcs.ProcessorCreatorService
+      args:
+          name: "realtime"
+          type: "dummy"
+
+mdb:
+  - type: "sheet"
+    args: 
+      file: "mdb/refmdb.xls"
+      enableAliasReferences: false
+
+streamConfig:
+  tm:
+    - name: "tm_realtime"
+  

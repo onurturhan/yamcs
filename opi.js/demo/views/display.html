@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ display }} | opi.js{% endblock %}
+
+{% block toolbar %}
+    <button onclick="page.toggleEdit()">
+        <i class="fas fa-fw fa-edit"></i>
+        Toggle Edit
+    </button>
+    <button onclick="page.zoomIn()">
+        <i class="fas fa-fw fa-search-plus"></i>
+        Zoom In
+    </button>
+    <button onclick="page.zoomOut()">
+        <i class="fas fa-fw fa-search-minus"></i>
+        Zoom Out
+    </button>
+{% endblock %}
+
+{% block sidebaraddition %}
+    <h2 style="margin-top: 2em">
+        <i class="fab fa-fw fa-buffer"></i>
+        WIDGETS
+    </h2>
+
+    <ul id="widgets" class="menu">
+    </ul>
+{% endblock %}
+
+{% block content %}
+    <div style="width: 100%; height: 100%; display: table">
+        <div style="display: table-cell; vertical-align: middle; overflow: auto; text-align: center">
+            <div id="mydisplay" style="display: inline-block"></div>
+        </div>
+    </div>
+
+    <script type="module" src="/static/display.page.js"></script>
+    <script>
+        window.addEventListener('load', () => {
+            page.loadDisplay('{{ displayHref }}');
+        });
+    </script>
+{% endblock %}

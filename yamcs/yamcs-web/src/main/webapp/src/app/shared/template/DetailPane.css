@@ -1,0 +1,15 @@
+.detail {
+  background-color: #fcfcfc;
+  float: right;
+  height: 100%;
+  width: 450px;
+  overflow: auto;
+  border-left: 1px solid rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+}
+
+@media print {
+  .detail {
+    display: none;
+  }
+}

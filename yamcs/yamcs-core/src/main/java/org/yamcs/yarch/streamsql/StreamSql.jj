@@ -1,0 +1,1139 @@
+/** A grammar for MRDP subset of StreamSql.
+    Initial start from the PL-SQL grammar found on javacc site
+*/
+
+options{
+    STATIC=false ;
+    IGNORE_CASE=true ;
+    //USER_CHAR_STREAM = false; //use the SimpleCharStream from the org.yamcs.utils.parser
+    
+    
+//  DEBUG_LOOKAHEAD= true ;
+//DEBUG_PARSER=true;
+}
+
+PARSER_BEGIN(StreamSqlParser)
+package org.yamcs.yarch.streamsql;
+
+import java.util.List;
+import java.util.ArrayList;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
+import org.yamcs.utils.parser.Token;
+import org.yamcs.utils.parser.SimpleCharStream;
+import org.yamcs.utils.parser.ParseException;
+
+import org.yamcs.yarch.*;
+import org.yamcs.yarch.streamsql.funct.*;
+import org.yamcs.yarch.TableWriter.InsertMode;
+
+
+public class StreamSqlParser {
+    private Object[] args = new Object[0];
+    int argCount = 0;
+
+    private String getNonEscapedString(String s) {
+	    return s.substring(1,s.length()-1).replace("''","'"); //remove the quote (') from beginning and from end and then replace double quote with single quote
+    }
+    
+    protected boolean seeTYPE() {
+        return "TYPE".equalsIgnoreCase(getToken(1).image);
+    }
+    
+   public void setArgs(Object[] args) {
+        this.args = args;
+    }
+    
+    ArgumentExpression nextArg() throws StreamSqlException {
+        if(argCount>=args.length) {
+            throw new StreamSqlException(StreamSqlException.ErrCode.WRONG_ARG_COUNT); 
+        }
+       ArgumentExpression expr = new ArgumentExpression(argCount, args[argCount++]);
+       expr.setArgs(args);
+       return expr;
+    }
+    
+    String nextArgAsString() throws StreamSqlException {
+  	    if(argCount>=args.length) {
+            throw new StreamSqlException(StreamSqlException.ErrCode.WRONG_ARG_COUNT); 
+        }
+        Object o = args[argCount++];
+        if(o instanceof String) {
+            return (String) o;
+        } else {
+            throw new StreamSqlException(StreamSqlException.ErrCode.BAD_ARG_TYPE, "Expected String, got "+o.getClass()); 
+        }
+    }
+    DataType getBasicDataType(String type) throws ParseException {
+        if("TIMESTAMP".equalsIgnoreCase(type)) {return DataType.TIMESTAMP;}
+        if("PARAMETER_VALUE".equalsIgnoreCase(type)) {return DataType.PARAMETER_VALUE;}
+        if("BINARY".equalsIgnoreCase(type))  {return DataType.BINARY;}
+        if("HRES_TIMESTAMP".equalsIgnoreCase(type)) {return DataType.HRES_TIMESTAMP;}
+    	if("UUID".equalsIgnoreCase(type)) {return DataType.UUID;}
+    
+        throw new ParseException("Unknown data type '"+type+"'");
+    }
+}
+PARSER_END(StreamSqlParser)
+
+
+SKIP:
+{
+    " "
+|   "\t"
+|   "\r"
+|   "\n"
+}
+
+/* Prefix      Meaning
+    -------------------
+    K_          Keyword
+    S_          Substitutes
+*/
+
+TOKEN: /* (Stream) SQL keywords. prefixed with K_ to avoid name clashes */
+{
+    <K_ADVANCE: "ADVANCE">
+|   <K_AFAP: "AFAP">
+|   <K_ALL: "ALL">
+|   <K_ALTER: "ALTER">
+|   <K_AND: "AND">
+|   <K_ANY: "ANY">
+|   <K_ARRAY:"ARRAY">
+|   <K_AS: "AS">
+|   <K_ASC:"ASC">
+|   <K_AUTO_INCREMENT: "AUTO_INCREMENT">
+|   <K_BETWEEN:"BETWEEN">
+|   <K_BOOLEAN:"BOOLEAN">
+|   <K_BY:"BY">
+|   <K_BYTE:"BYTE">
+|   <K_CHAR:"CHAR">
+|   <K_CLOSE:"CLOSE">
+|   <K_COLUMN_FAMILY: "COLUMN_FAMILY">
+|   <K_COMPRESSED:"COMPRESSED">
+|   <K_CREATE:"CREATE">
+|   <K_CURRENT:"CURRENT">
+|   <K_DATABASES:"DATABASES">
+|   <K_DATE:"DATE">
+|   <K_DECIMAL:"DECIMAL">
+|   <K_DELETE:"DELETE">
+|   <K_DESC:"DESC">
+|   <K_DESCRIBE:"DESCRIBE">
+|   <K_DISTINCT:"DISTINCT">
+|   <K_DOUBLE:"DOUBLE">
+|   <K_DROP:"DROP">
+|   <K_ENGINE:"ENGINE">
+|   <K_ENGINES:"ENGINES">
+|   <K_ENUM:"ENUM">
+|   <K_ESCAPE:"ESCAPE">
+|   <K_EXISTS:"EXISTS">
+|   <K_FIXED_DELAY:"FIXED_DELAY">
+|   <K_FLOAT:"FLOAT">
+|   <K_FROM:"FROM">
+|   <K_HAVING:"HAVING">
+|   <K_HISTOGRAM:"HISTOGRAM">
+|   <K_IF:"IF">
+|   <K_IN:"IN">
+|   <K_IN_KEY: "IN_KEY">
+|   <K_INPUT:"INPUT">
+|   <K_INDEX:"INDEX">
+|   <K_INSERT:"INSERT">
+|   <K_INSERT_APPEND:"INSERT_APPEND">
+|   <K_INT:"INT">
+|   <K_INTO:"INTO">
+|   <K_IS:"IS">
+|   <K_KEY:"KEY">
+|   <K_LIKE:"LIKE">
+|   <K_LIMIT:"LIMIT">
+|   <K_LOAD:"LOAD">
+|   <K_LONG:"LONG">
+|   <K_MERGE:"MERGE">
+|   <K_MOD:"MOD">
+|   <K_NOT:"NOT">
+|   <K_NOFOLLOW:"NOFOLLOW">
+|   <K_NULL:"NULL">
+|   <K_NULLS:"NULLS">
+|   <K_ON:"ON">
+|   <K_ONLY:"ONLY">
+|   <K_OR:"OR">
+|   <K_ORDER:"ORDER">
+|   <K_ORIGINAL:"ORIGINAL">
+|   <K_OUT:"OUT">
+|   <K_OUTPUT:"OUTPUT">
+|   <K_PARTITION:"PARTITION">
+|   <K_PORT:"PORT">
+|   <K_PRIMARY:"PRIMARY">
+|   <K_PROTOBUF:"PROTOBUF">
+|   <K_RANGE:"RANGE">
+|   <K_READ:"READ">
+|   <K_REAL:"REAL">
+|   <K_RENAME:"RENAME">
+|   <K_RESTART:"RESTART">
+|   <K_REVERSE:"REVERSE">
+|   <K_ROW:"ROW">
+|   <K_ROWS:"ROWS">
+|   <K_SAMPLE:"SAMPLE">
+|   <K_SELECT:"SELECT">
+|   <K_SEQUENCE:"SEQUENCE">
+|   <K_SET:"SET">
+|   <K_SIZE:"SIZE">
+|   <K_SHOW:"SHOW">
+|   <K_SHRT:"SHORT">
+|   <K_SMALLINT:"SMALLINT">
+|   <K_SEQUENCES:"SEQUENCES">
+|   <K_SPEED:"SPEED">
+|   <K_STEP_BY_STEP:"STEP_BY_STEP">
+|   <K_STREAM:"STREAM">
+|   <K_STREAMS:"STREAMS">
+|   <K_STRING:"STRING">
+|   <K_TABLE:"TABLE">
+|   <K_TABLE_FORMAT:"TABLE_FORMAT">
+|   <K_TABLES:"TABLES">
+|   <K_TABLESPACE:"TABLESPACE">
+|   <K_TIME:"TIME">
+|   <K_TIME_AND_VALUE:"TIME_AND_VALUE">
+|   <K_TO:"TO">
+|   <K_TUPLES:"TUPLES">
+|   <K_UNIQUE:"UNIQUE">
+|   <K_UPDATE:"UPDATE">
+|   <K_UPSERT:"UPSERT">
+|   <K_UPSERT_APPEND:"UPSERT_APPEND">
+|   <K_USE:"USE">
+|   <K_USING:"USING">
+|   <K_VALUE:"VALUE">
+|   <K_VALUES:"VALUES">
+|   <K_WHEN:"WHEN">
+|   <K_WHERE:"WHERE">
+|   <K_WITH:"WITH">
+}
+
+TOKEN : /* Numeric Constants */
+{
+    < S_INTEGER: <DECIMAL_LITERAL> | <HEX_LITERAL> >
+  |  <#DECIMAL_LITERAL: (<DIGIT>)+>
+  |  <#HEX_LITERAL: "0" ["x","X"] (["0"-"9","a"-"f","A"-"F"])+>
+  | < S_FLOAT:
+        (<DIGIT>)* "." (<DIGIT>)+ (<EXPONENT>)?
+      | (<DIGIT>)+ <EXPONENT>
+    >
+  | < #EXPONENT: ( <SIGN> )? ["e","E"] ( <DIGIT> )+ >
+  | < #DIGIT: ["0" - "9"] >
+  | < #HEX_DIGIT: ["0" - "9", "a" - "h", "A" - "H"] >
+  | < #SIGN: ["-","+"]>
+  | < S_STRING: "'" (~["'"])* "'" ("'" (~["'"])* "'")*>
+}
+
+SPECIAL_TOKEN:
+{
+   <LINE_COMMENT: "--"(~["\r","\n"])*>
+|  <MULTI_LINE_COMMENT: "/*" (~["*"])* "*" ("*" | (~["*","/"] (~["*"])* "*"))* "/">
+}
+
+
+TOKEN:
+{
+    < S_IDENTIFIER: (<LETTER>)+ (<DIGIT> | <LETTER> |<SPECIAL_CHARS>)* >
+  | < #LETTER: ["a"-"z", "A"-"Z"] >
+  | < #SPECIAL_CHARS: "$" | "_" | "#" | ".">
+  | < S_DOUBLE_QUOTED_IDENTIFIER: "\"" (~["\n","\r","\""])* "\"" >
+  | < S_QMARK: "?" >
+}
+
+
+DataType DataTypeDefinition():
+{
+    Token className;
+    DataType dataType;
+}
+{
+   (    "INT" {dataType = DataType.INT;}
+      |  "LONG" {dataType = DataType.LONG;}
+      |  "BOOLEAN" {dataType = DataType.BOOLEAN;}
+      |  "BYTE" {dataType = DataType.BYTE;}
+      |  "SHORT" {dataType = DataType.SHORT;}
+      |  "DOUBLE" {dataType = DataType.DOUBLE;}
+      |  "STRING"  {dataType = DataType.STRING;}
+      |  "ENUM"  {dataType = DataType.ENUM;}
+      |  "PROTOBUF" "(" className= <S_STRING> ")"   {dataType =  DataType.protobuf(getNonEscapedString(className.image));}
+      | <S_IDENTIFIER> {dataType = getBasicDataType(token.image);}
+    )
+    [
+      "[]" {dataType = DataType.array(dataType);}
+    ]
+    {
+     return dataType;
+    }
+    
+}
+
+
+StreamSqlStatement OneStatement() throws StreamSqlException: {
+    StreamSqlStatement statement;
+} {
+    statement=StreamSqlStatement() 
+    <EOF>
+    {
+        return statement;
+    }
+}
+
+StreamSqlStatement StreamSqlStatement() throws StreamSqlException: {StreamSqlStatement statement;}
+{
+    <EOF> {return null;}
+    |
+    (LOOKAHEAD(2) statement=CreateTableStatement()
+    |
+    LOOKAHEAD(2) statement=CreateStreamStatement()
+    |
+    statement=DeleteStatement()
+    |
+    statement=InsertStatement()
+    |
+    statement=SelectTableStatement()
+    |
+    statement=UpdateTableStatement()
+    |
+    statement=CloseStreamStatement()
+    |
+    statement=DropTableStatement()
+    |
+    statement=DescribeStatement()
+    |
+    LOOKAHEAD(2) statement=ShowStreamsStatement()
+    |    
+    LOOKAHEAD(2) statement=ShowStreamStatement()
+    |
+    LOOKAHEAD(2) statement=ShowTablesStatement()
+    |
+    LOOKAHEAD(2) statement=ShowEnginesStatement()
+    |
+    LOOKAHEAD(2) statement=ShowDatabasesStatement()
+    |
+    LOOKAHEAD(2) statement=ShowSequencesStatement()
+    |
+    LOOKAHEAD(2) statement=AlterSequenceStatement()
+    |
+    LOOKAHEAD(2) statement=AlterTableStatement()
+    )
+    {
+	return statement;
+    }
+}
+
+CreateInputStreamStatement CreateInputStreamStatement() throws StreamSqlException: {
+    TupleDefinition tupleDefinition;
+    String streamName;
+} {
+    <K_CREATE> "INPUT" "STREAM" streamName=ObjectName() tupleDefinition=TupleDefinition()
+    {
+	return new CreateInputStreamStatement(streamName,tupleDefinition);
+    }
+}
+
+CreateTableStatement CreateTableStatement() throws StreamSqlException: {
+    TupleDefinition tupleDefinition=new TupleDefinition();
+    ArrayList<String> primaryKey=new ArrayList<String>();
+    ArrayList<String> partitions=new ArrayList<String>();
+ 	ArrayList<String> index=new ArrayList<String>();
+    String tableName, pk, partitionColumn, indexColumn ;
+    boolean ifNotExists=false;
+    boolean autoincrement = false;
+    
+    TableColumnDefinition tcd;
+    
+    CreateTableStatement cts;
+    
+} {
+    <K_CREATE> <K_TABLE> [<K_IF> <K_NOT> <K_EXISTS> {ifNotExists=true;}] tableName=ObjectName()
+    "(" (tcd = TableColumnDefinition() "," {tupleDefinition.addColumn(tcd);} )+
+     <K_PRIMARY> <K_KEY> "(" pk=ObjectName() {primaryKey.add(pk);} ("," pk=ObjectName(){primaryKey.add(pk);})* ")" 
+     [","<K_INDEX> "(" indexColumn=ObjectName() {index.add(indexColumn);} ("," indexColumn=ObjectName(){index.add(indexColumn);})* ")"]
+     ")"
+     {cts=new CreateTableStatement(ifNotExists, tableName, tupleDefinition, primaryKey, index);}
+     (TableOption(cts))*	
+	
+    {
+	return cts;
+    }
+}
+
+TableColumnDefinition TableColumnDefinition() throws StreamSqlException: {
+   TableColumnDefinition tcd;
+   String columnName;
+   DataType columnType;
+} {
+   columnName=ObjectName() columnType=DataTypeDefinition() {tcd = new TableColumnDefinition(columnName,columnType);}
+   [<K_AUTO_INCREMENT> {tcd.setAutoIncrement(true);}]
+   {
+   return tcd;
+   }
+}
+
+void TableOption(CreateTableStatement cts) throws StreamSqlException: {
+   String columnName, tablespace, engine;
+   PartitioningSpec pspec;
+} {
+   <K_HISTOGRAM> "(" columnName=ObjectName() {cts.addHistogramColumn(columnName);} ("," columnName=ObjectName(){cts.addHistogramColumn(columnName);})* ")"
+   |
+   <K_ENGINE>  engine=ObjectName() {cts.setEngine(engine);}
+   |
+   <K_PARTITION> <K_BY>  pspec=PartitioningSpec() {cts.setPartitioning(pspec);} 
+   |
+   <K_TABLESPACE> tablespace=ObjectName() {cts.setTablespace(tablespace);}
+   |
+   <K_TABLE_FORMAT> "=" "COMPRESSED" {cts.setCompressed(true);}
+
+}
+
+PartitioningSpec PartitioningSpec() throws StreamSqlException: {
+    PartitioningSpec pspec;
+    String cname1, cname2;
+    Token timePartSchema = null;
+} {
+  ( <K_TIME> "(" cname1=ObjectName() [ "(" timePartSchema = <S_STRING> ")" ] ")" {pspec = PartitioningSpec.timeSpec(cname1);} 
+    |
+	<K_VALUE> "(" cname1=ObjectName() ")" {pspec = PartitioningSpec.valueSpec(cname1);} 
+    |
+	<K_TIME_AND_VALUE> "(" cname1=ObjectName() [ "(" timePartSchema = <S_STRING> ")" ] "," cname2=ObjectName() ")" { pspec = PartitioningSpec.timeAndValueSpec(cname1, cname2);} 
+  ) {  if(timePartSchema!=null) {
+          try {
+          	 pspec.setTimePartitioningSchema(getNonEscapedString(timePartSchema.image));
+           } catch (IllegalArgumentException e) {
+               throw new ParseException(e.getMessage());
+           }
+       }
+       return pspec;
+    }
+}
+
+CreateOutputStreamStatement CreateOutputStreamStatement() throws StreamSqlException: {
+    String name;
+    StreamExpression expression;
+} {
+    "CREATE" "OUTPUT" "STREAM" name=ObjectName() "AS" expression=SpeedLimitStreamExpression()
+    {
+	return new CreateOutputStreamStatement(name,expression);
+    }
+}
+
+CreateStreamStatement CreateStreamStatement() throws StreamSqlException: {
+    String name;
+    StreamExpression expression;
+    TupleDefinition tupleDefinition;
+} {
+    <K_CREATE> <K_STREAM> name=ObjectName() (
+        <K_AS> expression=SpeedLimitStreamExpression() 
+        { 
+            return new CreateStreamStatement(name,expression); 
+        }
+   |
+        tupleDefinition=TupleDefinition()
+        {
+            return new CreateStreamStatement(name,tupleDefinition);
+        }
+   )
+}
+
+SelectTableStatement SelectTableStatement() throws StreamSqlException: {
+    String name;
+    SelectExpression expression;
+} {
+    expression = SelectExpression() 
+    {
+        return new SelectTableStatement(expression); 
+    }
+}
+
+SpeedLimitStreamExpression SpeedLimitStreamExpression() throws StreamSqlException: {
+    StreamExpression expression;
+    SpeedSpec speedSpec=null;
+    boolean follow=true; 
+} {
+    expression=StreamExpression() [<K_SPEED> {speedSpec=SpeedSpec();}] [<K_NOFOLLOW> {follow=false;}]
+    {
+    if(expression instanceof SelectExpression) {
+        ((SelectExpression) expression).setFollow(follow);
+    }
+	return new SpeedLimitStreamExpression(expression,speedSpec);
+    }
+	
+}
+
+
+CloseStreamStatement CloseStreamStatement() throws StreamSqlException: {
+    String name;
+} {
+    <K_CLOSE> <K_STREAM> name=ObjectName()
+    {
+	return new CloseStreamStatement(name);
+    }
+}
+
+DropTableStatement DropTableStatement() throws StreamSqlException: {
+    boolean ifExists=false;
+    String name;
+} {
+    <K_DROP> <K_TABLE> [<K_IF> <K_EXISTS> {ifExists=true;}] name=ObjectName()
+    {
+	return new DropTableStatement(ifExists, name);
+    }
+}
+
+
+ShowStreamsStatement ShowStreamsStatement() throws StreamSqlException: {
+} {
+    <K_SHOW> <K_STREAMS> 
+    {
+	return new ShowStreamsStatement();
+    }
+}
+
+ShowTablesStatement ShowTablesStatement() throws StreamSqlException: {
+} {
+    <K_SHOW> <K_TABLES> 
+    {
+	return new ShowTablesStatement();
+    }
+}
+
+ShowStreamStatement ShowStreamStatement() throws StreamSqlException: {
+    String name;
+} {
+    <K_SHOW> <K_STREAM> name=ObjectName()
+    {
+	return new ShowStreamStatement(name);
+    }
+}
+
+ShowEnginesStatement ShowEnginesStatement() throws StreamSqlException: {
+} {
+    <K_SHOW> <K_ENGINES> 
+    {
+	return new ShowEnginesStatement();
+    }
+}
+
+ShowDatabasesStatement ShowDatabasesStatement() throws StreamSqlException: {
+} {
+    <K_SHOW> <K_DATABASES> 
+    {
+	return new ShowDatabasesStatement();
+    }
+}
+
+ShowSequencesStatement ShowSequencesStatement() throws StreamSqlException: {
+} {
+    <K_SHOW> <K_SEQUENCES> 
+    {
+	return new ShowSequencesStatement();
+    }
+}
+
+DescribeStatement DescribeStatement() throws StreamSqlException: {
+    String name;
+} {
+    <K_DESCRIBE> name=ObjectName()
+    {
+	return new DescribeStatement(name);
+    }
+}
+
+AlterSequenceStatement AlterSequenceStatement() throws StreamSqlException: {
+    String name;
+    BigDecimal n = new BigDecimal(0);
+} {
+    <K_ALTER>  <K_SEQUENCE> name=ObjectName() <K_RESTART> [ <K_WITH> n = NumericConstant()]
+    {
+	return new AlterSequenceStatement(name, n.longValue());
+    }
+}
+
+AlterTableStatement AlterTableStatement() throws StreamSqlException: {
+    String name, newName;
+} {
+    <K_ALTER>  <K_TABLE> name=ObjectName() <K_RENAME> <K_TO> newName=ObjectName()
+    {
+	return new AlterTableStatement(name, newName);
+    }
+}
+
+StreamExpression StreamExpression() throws StreamSqlException:  {
+    StreamExpression expression;
+} {
+   (expression=SelectExpression()
+   |
+   expression=MergeExpression()
+   )
+    {
+	return expression;
+    }
+}
+
+void IntoClause() throws StreamSqlException:{
+} {
+    "INTO" ObjectName()
+}
+
+InsertStatement InsertStatement() throws StreamSqlException: {
+    String name;
+    StreamExpression expression;
+    List<String> columns = new ArrayList();
+    List<SelectItem> selectList;
+    String cn;
+    InsertMode insertMode;
+} {
+    (
+       <K_INSERT> {insertMode = InsertMode.INSERT;}
+       |
+       <K_UPSERT> {insertMode = InsertMode.UPSERT;}
+       |
+       <K_INSERT_APPEND> {insertMode = InsertMode.INSERT_APPEND;}
+       |
+       <K_UPSERT_APPEND> {insertMode = InsertMode.UPSERT_APPEND;}
+       |
+       <K_LOAD> {insertMode = InsertMode.LOAD;}
+    )
+    <K_INTO> name=ObjectName()
+    (
+         expression=StreamExpression()
+         {
+             return new InsertStatement(name, expression, insertMode);
+         }
+      |
+         "(" cn=ObjectName() {columns.add(cn);} ("," cn=ObjectName(){columns.add(cn);})* ")"
+         <K_VALUES>
+         "(" selectList = SelectList() ")"
+         {
+            return new InsertStatement(name, new InsertValuesExpression(columns, selectList), InsertMode.INSERT);
+         }
+    )
+}
+
+MergeExpression MergeExpression() throws StreamSqlException: {
+    MergeExpression mergeExpr=new MergeExpression();
+    TupleSourceExpression tsrc;
+    String name;
+    boolean ascending = true;
+    BigDecimal offset = null;
+    BigDecimal limit = null;
+} {
+    "MERGE" 
+       tsrc=TupleSourceExpression() {mergeExpr.addTupleSourceExpression(tsrc);}
+       ("," 
+        tsrc=TupleSourceExpression() {mergeExpr.addTupleSourceExpression(tsrc);}
+       )*
+    "USING" name=ObjectName() {mergeExpr.setMergeColumn(name);}
+    [ ascending=OrderClause() {mergeExpr.setAscending(ascending);} ]
+    [ 
+        <K_LIMIT>
+        [LOOKAHEAD(2) offset=NumericConstant() "," ]
+        limit=NumericConstant() { mergeExpr.setLimit(offset, limit); }
+    ]
+    {
+	return mergeExpr;
+    }
+}
+
+DeleteStatement DeleteStatement() throws StreamSqlException: {
+    String tableName;
+    Expression expression=null;
+    BigDecimal limit = new BigDecimal(-1);
+} {
+    "DELETE" "FROM" tableName=ObjectName()
+    ["WHERE" expression=Expression() ]
+    ["LIMIT" limit=NumericConstant() ]
+    {
+	return new DeleteStatement(tableName, expression, limit.longValue());
+    }
+}
+
+
+UpdateTableStatement UpdateTableStatement() throws StreamSqlException: {
+    String tableName;
+    String colName;
+    Expression whereExpr = null;
+    Expression colValue;
+    List<UpdateTableStatement.UpdateItem> updateList = new ArrayList<UpdateTableStatement.UpdateItem>();
+    BigDecimal limit = new BigDecimal(-1);
+} {
+    "UPDATE" tableName=ObjectName()
+    "SET" 
+     colName = ObjectName() "=" colValue = SimpleExpression()
+       { 
+          updateList.add(new UpdateTableStatement.UpdateItem(colName, colValue));
+       }
+     ("," colName = ObjectName() "=" colValue = SimpleExpression()
+       {
+     	  updateList.add(new UpdateTableStatement.UpdateItem(colName, colValue));
+       } 
+     )*
+    ["WHERE" whereExpr=Expression() ]
+    ["LIMIT" limit=NumericConstant() ]
+    {
+	return new UpdateTableStatement(tableName, updateList, whereExpr, limit.longValue());
+    }
+}
+
+SpeedSpec SpeedSpec() throws StreamSqlException: {
+  String columnName;
+  BigDecimal bd;
+  float x=1;
+} {
+    "AFAP" {return new SpeedSpec(SpeedSpec.Type.AFAP);}
+  | "FIXED_DELAY" <S_INTEGER> {return new SpeedSpec(SpeedSpec.Type.FIXED_DELAY, Integer.parseInt(token.image));}
+  | "ORIGINAL" columnName=ObjectName() ["," bd=NumericConstant() {x=bd.floatValue();}] {return new SpeedSpec(SpeedSpec.Type.ORIGINAL, columnName, x);}
+  | "STEP_BY_STEP" <S_INTEGER> {return new SpeedSpec(SpeedSpec.Type.STEP_BY_STEP, Integer.parseInt(token.image));}
+}
+
+// Expression and its children
+Expression Expression() throws StreamSqlException: {
+    Expression expr;
+    ArrayList<Expression> list = new ArrayList<Expression>();
+} {
+      expr = AndExpression() { list.add(expr); }
+      ( "OR" expr=AndExpression() { list.add(expr); } )*
+    {
+        if(list.size() == 1) expr= list.get(0);
+        else expr = new OrExpression(list);
+
+        expr.setArgs(args);
+        return expr;
+    }
+}
+
+Expression AndExpression() throws StreamSqlException: {
+    Expression expr;
+    ArrayList<Expression> list=new ArrayList<Expression>();
+} {
+    (
+        (
+            LOOKAHEAD(3) expr=UnaryLogicalExpression()
+            |
+            "(" expr=Expression() ")"
+        ) { list.add(expr); }
+        (
+            "AND"
+            (
+            LOOKAHEAD(3)  expr=UnaryLogicalExpression()
+                |
+                "(" expr=Expression() ")"
+            ) { list.add(expr); }
+        )*
+    )
+    {
+        if(list.size()==1) return list.get(0);
+        else return new AndExpression(list);
+    }
+}
+
+Expression UnaryLogicalExpression() throws StreamSqlException: {
+    boolean notset=false;
+    Expression expr;
+} {
+    ["NOT" {notset = true;}] expr = RelationalExpression() 
+    {
+	if(notset) return new NotExpression(expr);
+	else return expr;
+    }
+}
+
+Expression RelationalExpression() throws StreamSqlException: {
+    Expression retExpr, expr;
+    RelOp relOp;
+    List<Expression> list;
+    LikeClause likeClause;
+    InClause inClause;
+    IsNullClause isNullClause;
+} {
+    expr = SimpleExpression() {retExpr=expr;}
+    ( relOp=RelOp() expr = SimpleExpression() {retExpr=new RelationalExpression(retExpr,expr,relOp);}
+      |
+      LOOKAHEAD(2) inClause=InClause() {retExpr=new InExpression(expr, inClause);}
+      |
+      LOOKAHEAD(2) BetweenClause()
+      |
+      LOOKAHEAD(2) likeClause = LikeClause() { retExpr = new LikeExpression(expr, likeClause);}
+      |
+      isNullClause = IsNullClause() { retExpr = new IsNullExpression(expr, isNullClause);}
+   )?
+    {
+	return retExpr;
+    }
+}
+
+List<Expression> ExpressionList() throws StreamSqlException: {
+    List<Expression> list=new ArrayList<Expression>();
+    Expression expr;
+} {
+    expr=Expression(){list.add(expr);} ("," expr=Expression() {list.add(expr);})*
+    {
+    return list;
+    }
+}
+
+InClause InClause() throws StreamSqlException: {
+    List<Expression> list;
+    InClause inClause = new InClause();
+} {
+    ["NOT" {inClause.setNegation(true);}] 
+    "IN" "(" list=ExpressionList()")" {inClause.setList(list);}
+    {
+    return inClause;
+    }
+}
+
+void BetweenClause() throws StreamSqlException: {
+} {
+    ["NOT"] "BETWEEN" SimpleExpression() "AND" SimpleExpression()
+}
+
+
+LikeClause LikeClause() throws StreamSqlException:{
+  LikeClause likeClause = new LikeClause();
+  String pattern;
+} {
+    ["NOT" {likeClause.setNegation(true);}]
+    "LIKE" (<S_STRING> {likeClause.setPattern(getNonEscapedString(token.image));}
+    | <S_QMARK> {likeClause.setPattern(nextArgAsString());}
+    )    
+    {
+       return likeClause;
+    }
+
+}
+
+IsNullClause IsNullClause() throws StreamSqlException:{
+	IsNullClause isNullClause = new IsNullClause();
+} {
+    "IS" ["NOT" {isNullClause.setNegation(true);}] "NULL"
+    {
+    return isNullClause;
+    }
+}
+
+
+Expression SimpleExpression() throws StreamSqlException: {
+    Expression expr;
+    BitwiseOp bitwiseOp;
+    List<Expression> exprs = new ArrayList<Expression>();
+    List<BitwiseOp> ops = new ArrayList<BitwiseOp>();
+} {
+    expr = AdditiveExpression() {exprs.add(expr);} 
+    ( LOOKAHEAD(2) bitwiseOp = BitwiseOp() expr = AdditiveExpression() {exprs.add(expr); ops.add(bitwiseOp);} )* 
+    {
+        if(ops.isEmpty()) {
+	     return exprs.get(0);
+        } else {
+	     return new BitwiseExpression(exprs, ops);
+        }
+    }
+}
+
+
+
+Expression AdditiveExpression() throws StreamSqlException: {
+    Expression expr;
+    AddOp addOp;
+    List<Expression>exprs = new ArrayList<Expression>();
+    List<AddOp> ops = new ArrayList<AddOp>();
+} {
+    expr = MultiplicativeExpression() {exprs.add(expr);} 
+    ( addOp=AddOp() expr = MultiplicativeExpression() {exprs.add(expr); ops.add(addOp);} )* 
+    {
+        if(ops.isEmpty()) {
+	     return exprs.get(0);
+        } else {
+	     return new AdditiveExpression(exprs,ops);
+        }
+    }
+}
+
+
+
+Expression MultiplicativeExpression() throws StreamSqlException: {
+    Expression expr;
+    MultOp multOp;
+    List<Expression>exprs=new ArrayList<Expression>();
+    List<MultOp> ops=new ArrayList<MultOp>();
+} {
+    expr=ExponentExpression() {exprs.add(expr);}
+    ( LOOKAHEAD(1) multOp=MultOp() expr=MultiplicativeExpression() {exprs.add(expr); ops.add(multOp);} )*
+    {
+        if(ops.isEmpty()) {
+	     return exprs.get(0);
+        } else {
+	     return new MultiplicativeExpression(exprs,ops);
+        }
+    }
+}
+
+Expression ExponentExpression() throws StreamSqlException: {
+    Expression retExpr,expr;
+} {
+    expr=UnaryExpression() {retExpr=expr;} 
+    [ "**" expr=UnaryExpression() {retExpr=new ExponentExpression(retExpr,expr);}]
+    {
+	return retExpr;
+    }
+}
+
+Expression UnaryExpression() throws StreamSqlException: {
+    Expression expr;
+    boolean negative=false;
+} {
+    ("+" | "-" {negative=true;})? expr=PrimaryExpression()
+    {
+	    if(negative) {
+            if(expr instanceof ValueExpression) {
+                return ((ValueExpression)expr).getNegative();
+            } else {
+                return new NegativeExpression(expr);
+            }
+        } else {
+            return expr;
+        }
+    }
+}
+
+
+Expression PrimaryExpression() throws StreamSqlException: {
+    String name;
+    Expression expr;
+    List<Expression> exprList;
+} {
+    <S_INTEGER> 
+      {
+         String s = token.image;
+         BigInteger bi ;
+         if(s.startsWith("0x") || s.startsWith("0X")) {
+             bi = new BigInteger(s.substring(2), 16);
+         } else {
+             bi = new BigInteger(s);
+         }
+         if (bi.bitLength() < 32) return new ValueExpression((Integer)bi.intValue());
+	     if (bi.bitLength() < 64) return new ValueExpression((Long)bi.longValue());
+         throw new ParseException("number too big for an int or a long: "+bi);
+      }
+  | <S_FLOAT> {return new ValueExpression(Double.valueOf(token.image));}
+  | <S_STRING> {return new ValueExpression(getNonEscapedString(token.image));}
+  | <S_QMARK> {return nextArg();}
+  | LOOKAHEAD(3) "(" expr = SimpleExpression() ")" {return expr;}
+  | "ARRAY" "[" exprList = ExpressionList() "]" {return new ArrayExpression(exprList); }
+  | LOOKAHEAD(ObjectName() "(") expr=FunctionCall() {return expr;}
+  | name=ObjectName() {return new ColumnExpression(name);}
+}
+
+
+/* ---------------- General Productions --------------------- */
+
+
+String ObjectName() throws StreamSqlException:
+{}
+{
+    <S_IDENTIFIER>        {return token.image;}
+  | <S_DOUBLE_QUOTED_IDENTIFIER> {String s1 = token.image; return s1.substring(1, s1.length() - 1);}  
+}
+
+
+BitwiseOp BitwiseOp()  throws StreamSqlException: {
+} {
+    "&" {return BitwiseOp.AND;}
+  | "|" {return BitwiseOp.OR;}
+  | "^" {return BitwiseOp.XOR;}
+  | "<<" {return BitwiseOp.LSHIFT;}
+  | ">>" {return BitwiseOp.RSHIFT;}
+}
+
+AddOp AddOp()  throws StreamSqlException: {
+} {
+    "+" {return AddOp.PLUS;}
+  | "-" {return AddOp.MINUS;}
+  | "||" {return AddOp.STRING_PLUS;}
+}
+
+
+
+MultOp MultOp() throws StreamSqlException: {
+} {
+    "*" {return MultOp.MULT;}
+  | "/" {return MultOp.DIV;}
+  | "MOD" {return MultOp.MOD;}
+}
+
+
+RelOp RelOp() throws StreamSqlException: {
+} {
+    "=" {return RelOp.EQUAL;}
+  | "!" "=" {return RelOp.NOT_EQUAL;}
+  | LOOKAHEAD(2) ">" "=" {return RelOp.GREATER_OR_EQUAL;}
+  | ">" {return RelOp.GREATER;}
+  | LOOKAHEAD(2) "<" ">" {return RelOp.NOT_EQUAL;}
+  | LOOKAHEAD(2) "<" "=" {return RelOp.LESS_OR_EQUAL;}
+  | LOOKAHEAD(2) "&" "&" {return RelOp.OVERLAP;}
+  | "<" {return RelOp.LESS;}
+}
+
+void Arguments() throws StreamSqlException: {
+} {
+    Argument() ("," Argument())*
+}
+
+void Argument() throws StreamSqlException: {
+} {
+    [LOOKAHEAD(2) <S_IDENTIFIER> "=>"] Expression()
+}
+
+/* --------------- General Productions ends here --------------- */
+
+/* ----------- SQL productions start here ----------------- */
+
+SelectExpression SelectExpression() throws StreamSqlException: {
+    SelectExpression expression;
+    boolean ascending;
+    BigDecimal offset = null;
+    BigDecimal limit = null;
+} {
+    expression=Select()
+    [ ascending=OrderClause() { expression.setAscending(ascending); } ]
+    [ 
+        <K_LIMIT>
+        [LOOKAHEAD(2) offset=NumericConstant() "," ]
+        limit=NumericConstant() { expression.setLimit(offset, limit); }
+    ] { return expression; }
+}
+
+SelectExpression Select() throws StreamSqlException:
+{
+    List<SelectItem> selectList;
+    TupleSourceExpression tsrc;
+    Expression whereClause=null;
+    SelectExpression selectExpr=new SelectExpression();
+    WindowSpecification windowSpec;
+}
+{
+    <K_SELECT> selectList=SelectList() {selectExpr.setSelectList(selectList);}
+    <K_FROM> tsrc=TupleSourceExpression() {selectExpr.setFirstSource(tsrc);}
+    [ "[" windowSpec=WindowSpecification() {selectExpr.setWindow(windowSpec);} "]" ]
+    [<K_WHERE> whereClause=Expression() {selectExpr.setWhereClause(whereClause);}]
+    {
+	return selectExpr;
+    }
+}
+
+
+/* Checks for whatever follows  SELECT */
+List<SelectItem> SelectList() throws StreamSqlException: {
+    List<SelectItem> selectList = new ArrayList<SelectItem>();
+    SelectItem selectItem;
+} {
+   selectItem=SelectItem() {selectList.add(selectItem);} 
+     ("," selectItem=SelectItem()  {selectList.add(selectItem);} )*
+   {return selectList;} 
+}
+
+SelectItem SelectItem() throws StreamSqlException: {
+    String name;
+    Expression expr;
+    SelectItem selectItem;
+} {
+       "*" {return SelectItem.STAR;}
+   |
+       expr=SimpleExpression() {selectItem=new SelectItem(expr);}
+       [ [ "AS" ] name=ObjectName() {
+	    selectItem.setAlias(name);
+        }
+      ]
+    { return selectItem;}
+}
+
+
+WindowSpecification WindowSpecification() throws StreamSqlException: {
+    String name,field;
+    WindowSpecification wspec;
+    BigDecimal size, advance;
+} {
+    name=ObjectName() {wspec=new WindowSpecification(name);}
+    |
+    "SIZE" size = NumericConstant() "ADVANCE" advance = NumericConstant()
+    ( "TIME" {wspec = new WindowSpecification(size,advance,WindowSpecification.Type.TIME);}
+    | "TUPLES" {wspec = new WindowSpecification(size,advance,WindowSpecification.Type.TUPLES);}
+    | "ON" 
+    field=ObjectName() {wspec = new WindowSpecification(size,advance,WindowSpecification.Type.FIELD,field);}
+    )
+  {return wspec;}
+}
+
+TupleSourceExpression TupleSourceExpression() throws StreamSqlException: {
+    TupleSourceExpression tsrc;
+    StreamExpression expr;
+    String name, histoColumn;
+    BigDecimal mergeTime;
+} {
+    (name=ObjectName() {tsrc = new TupleSourceExpression(name);} 
+         [ <K_HISTOGRAM> "(" histoColumn = ObjectName() {tsrc.setHistogramColumn(histoColumn);} 
+          [ "," mergeTime = NumericConstant()  { tsrc.setHistogramMergeTime(mergeTime);}] 
+         ")" ]
+     | LOOKAHEAD(3) "(" expr = StreamExpression() ")" {tsrc=new TupleSourceExpression(expr);}
+    )
+    {
+	return tsrc;
+    }
+}
+
+TupleDefinition TupleDefinition() throws StreamSqlException: {
+    String columnName;
+    TupleDefinition tupleDefinition=new TupleDefinition();
+    DataType columnType;
+} {
+    "(" 
+    	columnName=ObjectName() columnType=DataTypeDefinition() {tupleDefinition.addColumn(columnName,columnType);}
+    ("," columnName=ObjectName() columnType=DataTypeDefinition() {tupleDefinition.addColumn(columnName,columnType);})*
+    ")"
+    {
+        return tupleDefinition;
+    }
+}
+
+
+boolean OrderClause() throws StreamSqlException: {
+   boolean ascending=true;
+} {
+    <K_ORDER>
+    ["ASC" | "DESC" {ascending=false;} ]
+    {
+    return ascending;
+    }
+}
+
+
+Expression FunctionCall() throws StreamSqlException: {
+   String name;
+   List<Expression> args=null;
+   boolean star=false;
+} {
+    name=ObjectName()
+        "(" [(args=ExpressionList()
+            | "*" {star=true;}
+             )] ")"
+    {
+      return FunctionExpressionFactory.get(name, args, star);
+    }
+}
+
+BigDecimal NumericConstant()  throws StreamSqlException: {
+} {
+ (<S_INTEGER> | <S_FLOAT>) {return new BigDecimal(token.image);}
+}
+
+void ID(String id):{
+} {
+    <S_IDENTIFIER>
+    {
+        if (!token.image.matches("(?i)" + id)) {
+            throw new ParseException("Encountered " + token.image
+                + " at line " + token.beginLine + ", column " + token.beginColumn + "."
+                + "\nWas expecting: " + id);
+        }
+    }
+}

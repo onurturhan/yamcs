@@ -1,0 +1,67 @@
+CommonSettings: &CommonSettings
+  # algorithm used to hash the password: one of SHA-1 or SHA-256
+  hashAlgorithm: "SHA-1"
+
+  # which PDU contain the authentication: one of NONE, BIND or ALL  
+  authLevel: BIND
+
+  # how many seconds the timestamp of the authentication token can differ from local time
+  #if the delta is greater than this, the message will be rejected
+  authenticationDelay: 180
+
+  #version number sent in bind invocation
+  versionNumber: 2
+  #my username and password. The password is in hexadecimal
+  myUsername: "mertens"
+  myPassword:  000102030405060708090a0b0c0d0e0f
+
+  initiatorId: "mertens"
+  responderPortId: "Harness_Port_1"
+
+  #heartbeat settings 
+  heartbeatInterval: 30
+  heartbeatDeadFactor: 3
+
+Providers:
+  GS1:
+    <<: *CommonSettings
+    peerUsername: "jsle-bridge"
+    peerPassword: AB0102030405060708090a0b0c0d0e0f
+
+    cltu:
+      host: localhost 
+      port: 25711
+      responderPortId: "port_1" #this overwrites the responderPortId set above
+      serviceInstance: "sagr=SAGR.spack=SPACK.fsl-fg=FSL-FG.cltu=cltu1"
+
+    raf-onlt:
+      host: localhost
+      port: 25711
+      serviceInstance: "sagr=SAGR.spack=SPACK.rsl-fg=RSL-FG.raf=onlt1"
+
+    raf-onlc:
+      host: localhost 
+      port: 25711
+      serviceInstance: "sagr=SAGR.spack=SPACK.rsl-fg=RSL-FG.raf=onlc1"
+
+    raf-offl:
+      host: localhost 
+      port: 25711
+      serviceInstance: "sagr=SAGR.spack=SPACK.rsl-fg=RSL-FG.raf=offl1"
+      
+    rcf-onlt:
+      host: localhost
+      port: 25711
+      responderPortId: "port_2" #this overwrites the responderPortId set above
+      serviceInstance: "sagr=SAGR.spack=SPACK.rsl-fg=RSL-FG.rcf=onlt1"
+
+    rcf-onlc:
+      host: localhost 
+      port: 25711
+      serviceInstance: "sagr=SAGR.spack=SPACK.rsl-fg=RSL-FG.rcf=onlc1"
+
+    rcf-offl:
+      host: localhost 
+      port: 25711
+      serviceInstance: "sagr=SAGR.spack=SPACK.rsl-fg=RSL-FG.rcf=offl1"
+      
